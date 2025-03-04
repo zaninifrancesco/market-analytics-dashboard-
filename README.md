@@ -8,7 +8,6 @@
 - ✅ **Interactive charts** with **RSI, MACD, and moving averages**
 - ✅ **Live financial news feed**
 - ✅ **Telegram alerts** for buy/sell signals (RSI-based)
-- ✅ **Modern UI** with **React.js + TailwindCSS**
 
 ---
 
