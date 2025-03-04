@@ -6,8 +6,11 @@ from routes.crypto import crypto_bp
 from routes.news import news_bp
 from routes.indicators import indicators_bp
 from routes.search import search_bp
+from flask_cors import CORS
 
 app = Flask(__name__)
+
+CORS(app)
 
 # Registrazione delle route
 app.register_blueprint(stock_bp)
