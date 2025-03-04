@@ -1,0 +1,32 @@
+# Python bytecode
+*.pyc
+*.pyo
+__pycache__/
+
+# Ambiente virtuale (se usi un virtualenv)
+venv/
+env/
+.env/
+
+# File di configurazione dell'ambiente
+*.env
+
+# Dipendenze del progetto (se utilizzi pipenv o poetry)
+Pipfile.lock
+poetry.lock
+
+# Cartelle di cache e altri file temporanei
+*.log
+*.sqlite3
+*.db
+
+# IDEs / Editors (se usi VSCode o altri IDE)
+.vscode/
+.idea/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Cartelle di cache di Python (inclusi pip cache)
+pip-log.txt
+pip-delete-this-directory.txt
