@@ -19,7 +19,6 @@
 | **Backend** | Flask, Yahoo Finance API, Binance API |
 | **Data Processing** | Pandas, TA-Lib, NumPy |
 | **Notifications** | Telegram Bot API |
-| **Deployment** | Vercel (frontend), Render.com (backend) |
 
 ---
 
