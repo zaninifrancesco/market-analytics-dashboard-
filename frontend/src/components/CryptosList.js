@@ -1,46 +1,58 @@
 import React, { useEffect, useState } from "react";
+import { BitcoinIcon } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
 
 const CryptosList = () => {
-  const [cryptos, setCryptos] = useState([]);
+  const [cryptos, setCryptos] = useState({});
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/crypto_data/BTCUSDT")
-      .then((res) => res.json())
-      .then((data) => setCryptos(data));
+    const fetchTopSymbols = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/top_symbols");
+        const data = await response.json();
+        setCryptos(data.top_cryptos);
+      } catch (err) {
+        console.error("Errore nel fetch delle crypto:", err);
+      }
+    };
+
+    fetchTopSymbols();
   }, []);
 
+  const handleCryptoClick = (symbol) => {
+    navigate(`/crypto/${symbol}`);
+  };
+
   return (
-    <div className="p-4">
-      <h2 className="text-lg font-bold mb-4 text-gray-800">Crypto</h2>
-      <div className="grid grid-cols-1 gap-4">
-        {cryptos.map((crypto, index) => (
+    <div>
+      <div className="flex items-center mb-4">
+        <BitcoinIcon className="mr-2 text-orange-600" />
+        <h3 className="text-lg font-semibold text-gray-800">Top Cryptocurrencies</h3>
+      </div>
+      <div className="space-y-4">
+        {Object.entries(cryptos).map(([symbol, crypto]) => (
           <div 
-            key={index} 
-            className="bg-white shadow-md rounded-lg p-4 border border-gray-200 hover:shadow-lg transition-shadow duration-300"
+            key={symbol} 
+            className="bg-gray-100 rounded-lg p-4 hover:bg-gray-200 transition-colors duration-300 cursor-pointer"
+            onClick={() => handleCryptoClick(symbol)}
           >
             <div className="flex justify-between items-center mb-2">
               <div>
-                <span className="text-xl font-semibold text-blue-600">{crypto.Symbol}</span>
-                <span className="ml-2 text-gray-600 text-sm">Bitcoin</span>
+                <span className="text-lg font-bold text-blue-600">{crypto.name}</span>
+                <span className="ml-2 text-sm text-gray-600">{symbol}</span>
               </div>
-              <span className="text-lg font-bold text-green-600">${parseFloat(crypto.close).toFixed(2)}</span>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div>
-                <span className="text-gray-600">Open: </span>
-                <span className="font-medium">${parseFloat(crypto.open).toFixed(2)}</span>
-              </div>
-              <div>
-                <span className="text-gray-600">High: </span>
-                <span className="font-medium text-green-500">${parseFloat(crypto.high).toFixed(2)}</span>
-              </div>
-              <div>
-                <span className="text-gray-600">Low: </span>
-                <span className="font-medium text-red-500">${parseFloat(crypto.low).toFixed(2)}</span>
-              </div>
-              <div>
-                <span className="text-gray-600">Volume: </span>
-                <span className="font-medium">{parseFloat(crypto.volume).toLocaleString()}</span>
+              <div className="text-right">
+                <span className="text-lg font-bold">
+                  {crypto.current_price ? `$${crypto.current_price.toFixed(2)}` : 'N/A'}
+                </span>
+                <span 
+                  className={`block text-xs font-medium ${
+                    crypto.change_percent >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`}
+                >
+                  {crypto.change_percent ? `${crypto.change_percent.toFixed(2)}%` : 'N/A'}
+                </span>
               </div>
             </div>
           </div>
