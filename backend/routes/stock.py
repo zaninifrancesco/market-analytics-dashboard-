@@ -20,6 +20,7 @@ def get_stock_data(symbol):
         result = []
         for index, row in data[['Open', 'Close', 'High', 'Low', 'Volume']].iterrows():
             result.append({
+                'Date': index.strftime('%Y-%m-%d'),
                 'Symbol': symbol,
                 'Company_Name': company_name,
                 'Open': row['Open'],

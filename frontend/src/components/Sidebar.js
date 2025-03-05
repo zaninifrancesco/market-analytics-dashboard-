@@ -33,7 +33,7 @@ const Sidebar = () => {
           <SidebarItem 
             icon={<CandlestickChartIcon className="w-5 h-5" />} 
             text="Stocks" 
-            to="/stocks" 
+            to="/stock" 
           />
           <SidebarItem 
             icon={<BitcoinIcon className="w-5 h-5" />} 
