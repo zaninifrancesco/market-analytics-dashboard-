@@ -9,7 +9,7 @@ crypto_bp = Blueprint('crypto_bp', __name__)
 @crypto_bp.route('/api/crypto_data/<string:symbol>', methods=['GET'])
 def get_crypto_data(symbol):
     interval = request.args.get('interval', default='1d', type=str)
-    limit = request.args.get('limit', default=30, type=int)
+    limit = request.args.get('limit', default=1, type=int)
     try:
         url = f"https://api.binance.com/api/v3/klines?symbol={symbol}&interval={interval}&limit={limit}"
         response = requests.get(url)
@@ -21,6 +21,7 @@ def get_crypto_data(symbol):
         result = []
         for entry in data:
             result.append({
+                "Symbol": symbol,
                 "open_time": entry[0],
                 "open": entry[1],
                 "high": entry[2],
