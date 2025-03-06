@@ -4,9 +4,17 @@ const NewsWidget = () => {
   const [news, setNews] = useState([]);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/economic_news")
-      .then((res) => res.json())
-      .then((data) => setNews(data.slice(0, 5))); // Mostra solo le prime 5 news
+    const fetchNews = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/economic_news");
+        const data = await response.json();
+        setNews(data.slice(0, 5));
+      } catch (error) {
+        console.error("Error fetching news:", error);
+      }
+    };
+
+    fetchNews();
   }, []);
 
   return (
