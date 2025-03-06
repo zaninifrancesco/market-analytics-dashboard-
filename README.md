@@ -2,7 +2,7 @@
 
 <div align="center">
   
-![Dashboard Preview](https://via.placeholder.com/800x450?text=Market+Analytics+Dashboard)
+![Dashboard Preview](dashboard.png)
 
 📈 **Real-time stock & crypto tracking with interactive charts, financial news, and deep market insights**
 
