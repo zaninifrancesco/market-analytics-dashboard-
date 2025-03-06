@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage';
 import StockDetails from './pages/StockDetails';
 import CryptoDetails from './pages/CryptoDetails';
 import News from './pages/News';
+import StockPage from './pages/StocksPage';
 
 
 function App() {
@@ -14,7 +15,7 @@ function App() {
         <Route path="/stock/:symbol" element={<StockDetails />} />
         <Route path="/crypto/:symbol" element={<CryptoDetails />} />
         <Route path="/news" element={<News />} />
-        <Route path="/stocks" element={<StockDetails />} />
+        <Route path="/stocks" element={<StockPage />} />
         <Route path="/crypto" element={<CryptoDetails />} />
       </Routes>
     </Router>

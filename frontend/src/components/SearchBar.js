@@ -1,22 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { SearchIcon } from 'lucide-react';
+import { SearchIcon, TrendingUpIcon, BitcoinIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const SearchBar = () => {
   const [query, setQuery] = useState('');
-  const [suggestions, setSuggestions] = useState({ 
-    stocks: [], 
-    cryptos: [], 
-    stock_details: {} 
-  });
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const searchRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
-        setShowSuggestions(false);
+        setSearchResults([]);
       }
     };
 
@@ -26,78 +22,90 @@ const SearchBar = () => {
     };
   }, []);
 
-  const handleSearch = async (value) => {
-    setQuery(value);
-    
-    if (value.length > 0) {
-      try {
-        const response = await fetch(`http://localhost:5000/api/search_symbol?query=${value}`);
-        const data = await response.json();
-        setSuggestions(data);
-        setShowSuggestions(true);
-      } catch (error) {
-        console.error('Errore durante la ricerca:', error);
+  useEffect(() => {
+    const handleSearch = async () => {
+      if (!query || query.length < 2) {
+        setSearchResults([]);
+        return;
       }
-    } else {
-      setSuggestions({ stocks: [], cryptos: [], stock_details: {} });
-      setShowSuggestions(false);
-    }
-  };
 
-  const handleSuggestionClick = (symbol, type) => {
-    navigate(`/${type}/${symbol}`);
+      setIsLoading(true);
+      try {
+        const response = await fetch(`http://localhost:5000/api/search_stock?query=${query}`);
+        if (!response.ok) {
+          throw new Error('Search failed');
+        }
+        const data = await response.json();
+        setSearchResults(data);
+      } catch (err) {
+        console.error('Search error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Add debounce for search
+    const timeoutId = setTimeout(() => {
+      handleSearch();
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [query]);
+
+  const handleStockClick = (symbol) => {
+    navigate(`/stock/${symbol}`);
     setQuery('');
-    setShowSuggestions(false);
+    setSearchResults([]);
   };
 
   return (
     <div ref={searchRef} className="relative w-full max-w-md">
-      <div className="flex items-center bg-white rounded-lg shadow-md">
-        <SearchIcon className="ml-3 text-gray-500" size={20} />
+      <div className="relative">
         <input
           type="text"
-          placeholder="Search stocks, crypto..."
+          placeholder="Search for stocks..."
           value={query}
-          onChange={(e) => handleSearch(e.target.value)}
-          onFocus={() => query.length > 0 && setShowSuggestions(true)}
-          className="w-full p-2 pl-2 rounded-lg focus:outline-none"
+          onChange={(e) => setQuery(e.target.value)}
+          className="w-full p-3 pl-10 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
+        <div className="absolute inset-y-0 left-0 flex items-center pl-3">
+          <SearchIcon className="text-gray-400" size={18} />
+        </div>
+        {query && (
+          <button 
+            onClick={() => setQuery('')}
+            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+          >
+            <span className="text-lg">×</span>
+          </button>
+        )}
       </div>
-
-      {showSuggestions && (suggestions.stocks.length > 0 || suggestions.cryptos.length > 0) && (
-        <div className="absolute z-10 w-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto">
-          {suggestions.stocks.length > 0 && (
-            <div className="p-2 border-b">
-              <p className="text-xs font-semibold text-gray-600 mb-2">Stocks</p>
-              {suggestions.stocks.map((symbol) => (
-                <div
-                  key={symbol}
-                  onClick={() => handleSuggestionClick(symbol, 'stock')}
-                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer rounded flex justify-between items-center"
-                >
-                  <span className="font-medium">{symbol}</span>
-                  <span className="text-xs text-gray-500">
-                    {suggestions.stock_details[symbol] || symbol}
-                  </span>
+      
+      {searchResults.length > 0 && (
+        <div className="absolute z-50 mt-1 bg-white rounded-lg shadow-lg max-h-80 overflow-auto w-full border border-gray-100">
+          {searchResults.map((result, index) => (
+            <div
+              key={index}
+              className="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+              onClick={() => handleStockClick(result.symbol)}
+            >
+              <div className="flex justify-between items-center">
+                <div>
+                  <div className="font-medium text-blue-600">{result.symbol}</div>
+                  <div className="text-sm text-gray-600">{result.name} <span className="text-xs text-gray-400">({result.exchange})</span></div>
                 </div>
-              ))}
-            </div>
-          )}
-          
-          {suggestions.cryptos.length > 0 && (
-            <div className="p-2">
-              <p className="text-xs font-semibold text-gray-600 mb-2">Cryptocurrencies</p>
-              {suggestions.cryptos.map((symbol) => (
-                <div
-                  key={symbol}
-                  onClick={() => handleSuggestionClick(symbol, 'crypto')}
-                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer rounded"
-                >
-                  {symbol}
+                <div className="text-xs text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                  View
                 </div>
-              ))}
+              </div>
             </div>
-          )}
+          ))}
+        </div>
+      )}
+      
+      {isLoading && query && (
+        <div className="absolute right-3 top-3">
+          <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"></div>
         </div>
       )}
     </div>

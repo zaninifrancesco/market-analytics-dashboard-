@@ -10,7 +10,7 @@ const HomePage = () => {
     <div className="flex h-screen bg-gray-50">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
+        <Header showSearchBar={true} />
         <main className="flex-1 grid grid-cols-3 gap-6 p-6 overflow-auto">
           <div className="col-span-2 space-y-6">
             <div className="bg-white rounded-xl shadow-md p-6">
