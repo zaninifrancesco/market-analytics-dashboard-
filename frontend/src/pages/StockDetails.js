@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { 
-  LineChart, 
-  Line, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer 
+  ResponsiveContainer,
+  AreaChart,
+  Area
 } from 'recharts';
 import axios from 'axios';
 import { 
@@ -15,7 +15,8 @@ import {
   TrendingUpIcon, 
   BarChartIcon,
   NewspaperIcon,
-  AlertTriangleIcon
+  AlertTriangleIcon,
+  BarChart2Icon
 } from 'lucide-react';
 import TimeframeSelector from '../components/TimeframeSelector';
 import Sidebar from '../components/Sidebar';
@@ -27,14 +28,13 @@ function StockDetails() {
   const [technicalIndicators, setTechnicalIndicators] = useState(null);
   const [relatedNews, setRelatedNews] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTimeframe, setSelectedTimeframe] = useState('1m'); // Default to 1 month
+  const [selectedTimeframe, setSelectedTimeframe] = useState('1m');
   const [errors, setErrors] = useState({
     stockData: null,
     technicalIndicators: null,
     news: null
   });
 
-  // Map timeframe selections to API period parameter
   const timeframeToPeriod = {
     '1d': '1d',
     '1w': '1wk',
@@ -42,7 +42,6 @@ function StockDetails() {
     '1y': '1y'
   };
 
-  // Map timeframes to appropriate interval formats for X-axis
   const timeframeToDateFormat = {
     '1d': (date) => new Date(date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
     '1w': (date) => new Date(date).toLocaleDateString([], {weekday: 'short'}),
@@ -60,7 +59,6 @@ function StockDetails() {
       });
 
       try {
-        // Fetch stock price history with the selected period
         const period = timeframeToPeriod[selectedTimeframe];
         const stockResponse = await axios.get(`http://localhost:5000/api/stock_data/${symbol}?period=${period}`)
           .catch(err => {
@@ -71,7 +69,6 @@ function StockDetails() {
             return { data: null };
           });
         
-        // Fetch technical indicators
         const indicatorsResponse = await axios.get(`http://localhost:5000/api/technical_indicators/${symbol}`)
           .catch(err => {
             setErrors(prev => ({
@@ -81,7 +78,6 @@ function StockDetails() {
             return { data: null };
           });
         
-        // Fetch related news
         const newsResponse = await axios.get('http://localhost:5000/api/economic_news')
           .catch(err => {
             setErrors(prev => ({
@@ -93,7 +89,7 @@ function StockDetails() {
 
         setStockData(stockResponse.data);
         setTechnicalIndicators(indicatorsResponse.data);
-        setRelatedNews(newsResponse.data?.slice(0, 3) || []); // First 3 news articles
+        setRelatedNews(newsResponse.data?.slice(0, 3) || []);
         setLoading(false);
       } catch (err) {
         console.error('Unexpected error:', err);
@@ -102,7 +98,7 @@ function StockDetails() {
     };
 
     fetchStockDetails();
-  }, [symbol, selectedTimeframe]); // Refetch when timeframe changes
+  }, [symbol, selectedTimeframe]);
 
   const handleTimeframeChange = (timeframe) => {
     setSelectedTimeframe(timeframe);
@@ -114,48 +110,35 @@ function StockDetails() {
     </div>
   );
 
-  // Format date based on selected timeframe
   const formatDate = (dateStr) => {
     if (!dateStr) return '';
     const dateFormatter = timeframeToDateFormat[selectedTimeframe];
     return dateFormatter(dateStr);
   };
 
-  // Prepare chart data for Recharts
-  const chartData = stockData?.map(entry => {
-    // Handle different date formats from API
-    const dateVal = entry.Date || entry.open_time || new Date().toISOString();
-    
-    return {
-      date: dateVal,
-      formattedDate: formatDate(dateVal),
-      close: entry.Close || entry.close || 0
-    };
-  }) || [];
+  const chartData = stockData?.map(entry => ({
+    date: entry.Date || entry.open_time || new Date().toISOString(),
+    formattedDate: formatDate(entry.Date || entry.open_time),
+    close: entry.Close || entry.close || 0,
+    high: entry.High || entry.high || 0,
+    low: entry.Low || entry.low || 0,
+    volume: entry.Volume || entry.volume || 0
+  })) || [];
 
-  // Use fewer data points for better visualization in day view
-  const dataPointsToShow = {
-    '1d': 24,   // Hourly for day view
-    '1w': 7,    // Daily for week view
-    '1m': 30,   // Daily for month view
-    '1y': 12    // Monthly for year view
+  const calculatePriceChange = () => {
+    if (!chartData || chartData.length < 2) return 0;
+    const firstPrice = chartData[0].close;
+    const lastPrice = chartData[chartData.length - 1].close;
+    return ((lastPrice - firstPrice) / firstPrice * 100);
   };
 
-  // Sample data at appropriate intervals
-  const sampledChartData = () => {
-    if (chartData.length === 0) return [];
-    
-    // If we have fewer points than requested, return all data
-    if (chartData.length <= dataPointsToShow[selectedTimeframe]) {
-      return chartData;
-    }
-    
-    // Otherwise sample evenly
-    const interval = Math.floor(chartData.length / dataPointsToShow[selectedTimeframe]);
-    return chartData.filter((_, index) => index % interval === 0);
+  const getPriceColor = () => {
+    if (!chartData || chartData.length < 2) return "#8884d8";
+    const firstPrice = chartData[0].close;
+    const lastPrice = chartData[chartData.length - 1].close;
+    return lastPrice >= firstPrice ? "#16a34a" : "#dc2626";
   };
 
-  // Error Alert Component
   const ErrorAlert = ({ message }) => (
     <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative" role="alert">
       <div className="flex items-center">
@@ -171,7 +154,6 @@ function StockDetails() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
         <div className="container mx-auto p-6 overflow-auto">
-          {/* Error Notifications */}
           <div className="space-y-4 mb-6">
             {errors.stockData && <ErrorAlert message={`Stock Data: ${errors.stockData}`} />}
             {errors.technicalIndicators && <ErrorAlert message={`Technical Indicators: ${errors.technicalIndicators}`} />}
@@ -179,24 +161,30 @@ function StockDetails() {
           </div>
 
           <div className="grid grid-cols-3 gap-6">
-            {/* Stock Overview */}
             <div className="col-span-2 bg-white rounded-xl shadow-md p-6">
-              <div className="flex items-center mb-4">
-                <TrendingUpIcon className="mr-2 text-blue-600" />
-                <h2 className="text-2xl font-bold">{symbol} Stock Overview</h2>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <TrendingUpIcon className="mr-2 text-blue-600" />
+                  <h2 className="text-2xl font-bold">{symbol} Stock Overview</h2>
+                </div>
+                {chartData.length > 1 && (
+                  <span className={`font-bold text-lg ${
+                    calculatePriceChange() >= 0 ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {calculatePriceChange() >= 0 ? '+' : ''}{calculatePriceChange().toFixed(2)}%
+                  </span>
+                )}
               </div>
 
-              {/* Timeframe Selector */}
               <TimeframeSelector 
                 selectedTimeframe={selectedTimeframe}
                 onTimeframeChange={handleTimeframeChange}
               />
 
-              {/* Price Chart */}
               <div className="h-96 w-full">
                 {chartData.length > 0 ? (
                   <ResponsiveContainer>
-                    <LineChart data={sampledChartData()}>
+                    <AreaChart data={chartData}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis 
                         dataKey="formattedDate" 
@@ -211,15 +199,17 @@ function StockDetails() {
                         formatter={(value) => [`$${value.toFixed(2)}`, 'Price']}
                         labelFormatter={(label) => `Date: ${label}`}
                       />
-                      <Line 
+                      <Area 
                         type="monotone" 
                         dataKey="close" 
-                        stroke="#8884d8" 
+                        stroke={getPriceColor()} 
+                        fill={getPriceColor()}
+                        fillOpacity={0.2}
                         strokeWidth={2}
                         dot={false}
                         activeDot={{ r: 6 }}
                       />
-                    </LineChart>
+                    </AreaChart>
                   </ResponsiveContainer>
                 ) : (
                   <div className="flex justify-center items-center h-full text-gray-500">
@@ -229,7 +219,6 @@ function StockDetails() {
               </div>
             </div>
 
-            {/* Stock Details & Technical Indicators */}
             <div className="space-y-6">
               <div className="bg-white rounded-xl shadow-md p-6">
                 <div className="flex items-center mb-4">
@@ -240,20 +229,28 @@ function StockDetails() {
                   {stockData?.[0] ? (
                     <>
                       <div className="flex justify-between">
-                        <span>Open Price:</span>
-                        <span className="font-bold">${(stockData[0].Open || stockData[0].open || 0).toFixed(2)}</span>
+                        <span>Current Price:</span>
+                        <span className="font-bold">
+                          ${(stockData[0].Close || stockData[0].close || 0).toFixed(2)}
+                        </span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Close Price:</span>
-                        <span className="font-bold">${(stockData[0].Close || stockData[0].close || 0).toFixed(2)}</span>
+                        <span>Open Price:</span>
+                        <span className="font-bold">
+                          ${(stockData[0].Open || stockData[0].open || 0).toFixed(2)}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span>High:</span>
-                        <span className="font-bold">${(stockData[0].High || stockData[0].high || 0).toFixed(2)}</span>
+                        <span className="font-bold">
+                          ${(stockData[0].High || stockData[0].high || 0).toFixed(2)}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Low:</span>
-                        <span className="font-bold">${(stockData[0].Low || stockData[0].low || 0).toFixed(2)}</span>
+                        <span className="font-bold">
+                          ${(stockData[0].Low || stockData[0].low || 0).toFixed(2)}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Volume:</span>
@@ -261,6 +258,16 @@ function StockDetails() {
                           {(stockData[0].Volume || stockData[0].volume || 0).toLocaleString()}
                         </span>
                       </div>
+                      {chartData.length > 1 && (
+                        <div className="flex justify-between">
+                          <span>Price Change:</span>
+                          <span className={`font-bold ${
+                            calculatePriceChange() >= 0 ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {calculatePriceChange() >= 0 ? '+' : ''}{calculatePriceChange().toFixed(2)}%
+                          </span>
+                        </div>
+                      )}
                     </>
                   ) : (
                     <div className="text-center text-gray-500">No stock details available</div>
@@ -268,7 +275,6 @@ function StockDetails() {
                 </div>
               </div>
 
-              {/* Technical Indicators */}
               <div className="bg-white rounded-xl shadow-md p-6">
                 <div className="flex items-center mb-4">
                   <BarChartIcon className="mr-2 text-purple-600" />
@@ -290,7 +296,6 @@ function StockDetails() {
                         <span>SMA (50 days):</span>
                         <span className="font-bold">{technicalIndicators.SMA.toFixed(2)}</span>
                       </div>
-                      {/* Indicator interpretation */}
                       <div className="mt-4 text-sm">
                         <p className="text-gray-600">
                           {technicalIndicators.RSI > 70 ? 
@@ -306,9 +311,59 @@ function StockDetails() {
                   )}
                 </div>
               </div>
+
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <div className="flex items-center mb-4">
+                  <BarChart2Icon className="mr-2 text-purple-600" />
+                  <h3 className="text-xl font-semibold">Market Sentiment</h3>
+                </div>
+                <div className="space-y-3">
+                  {stockData && stockData.length > 0 ? (
+                    <>
+                      <div className="flex justify-between">
+                        <span>Overall Trend:</span>
+                        {chartData.length > 1 && (
+                          <span className={`font-bold ${
+                            chartData[chartData.length-1].close > chartData[0].close 
+                              ? 'text-green-600' 
+                              : 'text-red-600'
+                          }`}>
+                            {chartData[chartData.length-1].close > chartData[0].close ? 'Bullish' : 'Bearish'}
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div className="flex justify-between">
+                        <span>Volume Trend:</span>
+                        <span className="font-bold">
+                          {chartData.length > 1 && stockData[0].Volume > 
+                            chartData.reduce((sum, entry) => sum + entry.volume, 0) / chartData.length
+                            ? 'High'
+                            : 'Average'
+                          }
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-between">
+                        <span>Volatility:</span>
+                        <span className="font-bold">
+                          {chartData.length > 1 && (
+                            (Math.max(...chartData.map(d => d.high)) - 
+                             Math.min(...chartData.map(d => d.low))) / 
+                            chartData[0].close > 0.03
+                            ? 'High'
+                            : 'Moderate'
+                          )}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center text-gray-500">No sentiment data available</div>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Related News */}
             <div className="col-span-3 bg-white rounded-xl shadow-md p-6">
               <div className="flex items-center mb-4">
                 <NewspaperIcon className="mr-2 text-red-600" />
