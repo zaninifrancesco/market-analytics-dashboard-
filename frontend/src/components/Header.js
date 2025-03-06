@@ -6,8 +6,10 @@ const Header = () => {
   return (
     <header className="bg-white shadow-sm px-6 py-4">
       <div className="flex items-center justify-between">
-        <div className="flex-1 max-w-md">
-          <SearchBar />
+        <div className="flex-1 flex justify-center"> {/* Modificato qui per centrare */}
+          <div className="w-full max-w-2xl"> {/* Aggiunto div con larghezza specifica */}
+            <SearchBar />
+          </div>
         </div>
         <div className="flex items-center space-x-4">
           <button className="relative p-2 rounded-full hover:bg-gray-100 transition-colors">

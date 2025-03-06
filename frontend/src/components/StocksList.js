@@ -1,21 +1,37 @@
 import React, { useEffect, useState } from "react";
-import { TrendingUpIcon, ArrowUpIcon, ArrowDownIcon, ExternalLinkIcon } from "lucide-react";
+import { TrendingUpIcon, ArrowUpIcon, ArrowDownIcon, ExternalLinkIcon, AlertCircleIcon } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
 const StocksList = () => {
   const [stocks, setStocks] = useState({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchTopSymbols = async () => {
       setLoading(true);
       try {
-        const response = await fetch("http://localhost:5000/api/top_symbols");
+        const response = await fetch("http://localhost:5000/api/top_stocks");
+        
+        if (!response.ok) {
+          throw new Error(`API returned status: ${response.status}`);
+        }
+        
         const data = await response.json();
+        
+        // Verifica se top_stocks esiste, altrimenti imposta un errore
+        if (!data.top_stocks || Object.keys(data.top_stocks).length === 0) {
+          throw new Error("No stock data available");
+        }
+        
         setStocks(data.top_stocks);
+        setError(null);
       } catch (err) {
         console.error("Errore nel fetch degli stock:", err);
+        setError(`Impossibile caricare i dati delle azioni: ${err.message}`);
+        // Non impostare dati falsi, mantieni stocks vuoto
+        setStocks({});
       } finally {
         setLoading(false);
       }
@@ -53,6 +69,27 @@ const StocksList = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="p-4 border border-red-200 bg-red-50 rounded-lg">
+        <div className="flex items-center mb-2">
+          <AlertCircleIcon className="text-red-500 mr-2" size={20} />
+          <h3 className="font-semibold text-red-700">Errore</h3>
+        </div>
+        <p className="text-red-600 mb-3">{error}</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="px-4 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors text-sm font-medium"
+        >
+          Riprova
+        </button>
+      </div>
+    );
+  }
+
+  // Assicurati che stocks sia un oggetto prima di usare Object.entries
+  const stockEntries = Object.entries(stocks || {});
+
   return (
     <div className="p-1">
       <div className="flex items-center justify-between mb-6">
@@ -70,8 +107,8 @@ const StocksList = () => {
         </button>
       </div>
       <div className="space-y-3">
-        {Object.entries(stocks).length > 0 ? (
-          Object.entries(stocks).map(([symbol, stock]) => (
+        {stockEntries.length > 0 ? (
+          stockEntries.map(([symbol, stock]) => (
             <div 
               key={symbol} 
               className="bg-white border border-gray-100 rounded-xl p-4 hover:shadow-md transition-all duration-200 cursor-pointer group"
@@ -82,7 +119,7 @@ const StocksList = () => {
                   <div className="flex items-center">
                     <span className="text-lg font-bold text-gray-900">{symbol}</span>
                     <span className="ml-2 text-xs py-1 px-2 bg-gray-100 rounded-full text-gray-600">
-                      {stock.name.length > 15 ? `${stock.name.substring(0, 15)}...` : stock.name}
+                      {stock.name && stock.name.length > 15 ? `${stock.name.substring(0, 15)}...` : stock.name || symbol}
                     </span>
                   </div>
                   <span className="text-sm text-gray-500 mt-1 group-hover:text-blue-600 transition-colors">
@@ -91,20 +128,20 @@ const StocksList = () => {
                 </div>
                 <div className="flex flex-col items-end">
                   <span className="text-lg font-bold text-gray-900">
-                    ${stock.current_price ? stock.current_price.toFixed(2) : 'N/A'}
+                    ${stock.current_price != null ? stock.current_price.toFixed(2) : 'N/A'}
                   </span>
                   <div 
                     className={`flex items-center mt-1 ${
-                      stock.change_percent >= 0 ? 'text-green-600' : 'text-red-600'
+                      (stock.change_percent || 0) >= 0 ? 'text-green-600' : 'text-red-600'
                     }`}
                   >
-                    {stock.change_percent >= 0 ? (
+                    {(stock.change_percent || 0) >= 0 ? (
                       <ArrowUpIcon size={14} className="mr-1" />
                     ) : (
                       <ArrowDownIcon size={14} className="mr-1" />
                     )}
                     <span className="text-sm font-medium">
-                      {stock.change_percent ? `${Math.abs(stock.change_percent).toFixed(2)}%` : 'N/A'}
+                      {stock.change_percent != null ? `${Math.abs(stock.change_percent).toFixed(2)}%` : 'N/A'}
                     </span>
                   </div>
                 </div>
@@ -113,7 +150,7 @@ const StocksList = () => {
           ))
         ) : (
           <div className="text-center py-6 text-gray-500">
-            No stocks available at the moment
+            {error ? error : "No stocks available at the moment"}
           </div>
         )}
       </div>

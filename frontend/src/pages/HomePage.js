@@ -1,5 +1,4 @@
 import React from "react";
-import Sidebar from "../components/Sidebar";
 import StocksList from "../components/StocksList";
 import CryptosList from "../components/CryptosList";
 import NewsWidget from "../components/NewsWidget";
@@ -8,7 +7,6 @@ import Header from "../components/Header";
 const HomePage = () => {
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header showSearchBar={true} />
         <main className="flex-1 grid grid-cols-3 gap-6 p-6 overflow-auto">

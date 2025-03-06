@@ -136,19 +136,48 @@ def get_stock_data(symbol):
         print(f"Error fetching stock data: {e}")
         return jsonify({"error": str(e)}), 500
 
-# Endpoint to get top traded stocks
+
+# Endpoint to get top traded stocks with real data
 @stock_bp.route('/api/top_stocks', methods=['GET'])
 def get_top_stocks():
-    # You could implement real data here, this is mock data
-    top_stocks = {
-        'AAPL': {'name': 'Apple Inc.', 'current_price': 173.45, 'change_percent': 1.23},
-        'GOOGL': {'name': 'Alphabet Inc.', 'current_price': 140.12, 'change_percent': 0.87},
-        'MSFT': {'name': 'Microsoft Corporation', 'current_price': 336.78, 'change_percent': -0.34},
-        'AMZN': {'name': 'Amazon.com Inc.', 'current_price': 138.56, 'change_percent': 2.15},
-        'META': {'name': 'Meta Platforms Inc.', 'current_price': 299.42, 'change_percent': 1.78}
-    }
-    return jsonify(top_stocks)
-# Aggiungiamo questi endpoint al file stock.py esistente
+
+    # Lista delle azioni più popolari/importanti da monitorare
+    popular_symbols = [
+        'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 
+        'TSLA', 'NVDA', 'JPM', 'V', 'WMT'
+    ]
+    
+    top_stocks = {}
+    
+    # Scarica i dati per ogni simbolo
+    for symbol in popular_symbols:
+
+        ticker = yf.Ticker(symbol)
+        info = ticker.info
+        hist = ticker.history(period="2d")  # Ottieni 2 giorni per calcolare la variazione percentuale
+        
+        if not hist.empty and len(hist) > 0:
+            # Ottieni il prezzo attuale
+            current_price = float(hist['Close'].iloc[-1])
+            
+            # Calcola la variazione percentuale
+            if len(hist) > 1:
+                prev_close = float(hist['Close'].iloc[-2])
+                change_percent = ((current_price - prev_close) / prev_close) * 100
+            else:
+                change_percent = 0  # Se abbiamo solo un giorno di dati
+            
+            # Salva i dati
+            top_stocks[symbol] = {
+                'name': info.get('longName', symbol),
+                'current_price': current_price,
+                'change_percent': change_percent
+            }
+
+    # Converti in struttura top_stocks per compatibilità col frontend
+    return jsonify({"top_stocks": top_stocks})
+        
+
 
 @stock_bp.route('/api/market_overview', methods=['GET'])
 def get_market_overview():

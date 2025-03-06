@@ -5,17 +5,31 @@ import { useNavigate } from 'react-router-dom';
 const CryptosList = () => {
   const [cryptos, setCryptos] = useState({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchTopSymbols = async () => {
       setLoading(true);
       try {
-        const response = await fetch("http://localhost:5000/api/top_symbols");
+        const response = await fetch("http://localhost:5000/api/top_cryptos");
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
         const data = await response.json();
-        setCryptos(data.top_cryptos);
+        
+        // Check if top_cryptos exists in the response
+        if (data && data.top_cryptos) {
+          setCryptos(data.top_cryptos);
+        } else {
+          console.warn("API response doesn't contain top_cryptos:", data);
+          setCryptos({}); // Ensure cryptos is an empty object, not null/undefined
+        }
+        setError(null);
       } catch (err) {
-        console.error("Errore nel fetch delle crypto:", err);
+        console.error("Error fetching cryptocurrencies:", err);
+        setError("Failed to load cryptocurrencies. Please try again later.");
+        setCryptos({}); // Set to empty object on error
       } finally {
         setLoading(false);
       }
@@ -31,6 +45,7 @@ const CryptosList = () => {
   if (loading) {
     return (
       <div className="animate-pulse p-1">
+        {/* Loading UI - no changes needed here */}
         <div className="flex items-center mb-6">
           <div className="w-5 h-5 rounded-full bg-gray-200 mr-2"></div>
           <div className="h-6 w-40 bg-gray-200 rounded-md"></div>
@@ -53,6 +68,20 @@ const CryptosList = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="p-4 border border-red-200 bg-red-50 rounded-lg text-red-600">
+        <p>{error}</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="mt-2 text-sm bg-red-100 hover:bg-red-200 px-3 py-1 rounded"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="p-1">
       <div className="flex items-center justify-between mb-6">
@@ -70,7 +99,7 @@ const CryptosList = () => {
         </button>
       </div>
       <div className="space-y-3">
-        {Object.entries(cryptos).length > 0 ? (
+        {cryptos && Object.keys(cryptos).length > 0 ? (
           Object.entries(cryptos).map(([symbol, crypto]) => (
             <div 
               key={symbol} 
@@ -82,7 +111,7 @@ const CryptosList = () => {
                   <div className="flex items-center">
                     <span className="text-lg font-bold text-gray-900">{symbol}</span>
                     <span className="ml-2 text-xs py-1 px-2 bg-amber-50 rounded-full text-amber-700">
-                      {crypto.name.length > 15 ? `${crypto.name.substring(0, 15)}...` : crypto.name}
+                      {crypto.name && crypto.name.length > 15 ? `${crypto.name.substring(0, 15)}...` : crypto.name || symbol}
                     </span>
                   </div>
                   <span className="text-sm text-gray-500 mt-1 group-hover:text-amber-600 transition-colors">
@@ -95,16 +124,17 @@ const CryptosList = () => {
                   </span>
                   <div 
                     className={`flex items-center mt-1 ${
-                      crypto.change_percent >= 0 ? 'text-green-600' : 'text-red-600'
+                      (crypto.change_percent || 0) >= 0 ? 'text-green-600' : 'text-red-600'
                     }`}
                   >
-                    {crypto.change_percent >= 0 ? (
+                    {(crypto.change_percent || 0) >= 0 ? (
                       <ArrowUpIcon size={14} className="mr-1" />
                     ) : (
                       <ArrowDownIcon size={14} className="mr-1" />
                     )}
                     <span className="text-sm font-medium">
-                      {crypto.change_percent ? `${Math.abs(crypto.change_percent).toFixed(2)}%` : 'N/A'}
+                      {crypto.change_percent !== null && crypto.change_percent !== undefined ? 
+                        `${Math.abs(crypto.change_percent).toFixed(2)}%` : 'N/A'}
                     </span>
                   </div>
                 </div>
