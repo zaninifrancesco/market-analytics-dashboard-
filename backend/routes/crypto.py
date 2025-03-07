@@ -202,14 +202,22 @@ def get_crypto_market_overview():
             
         global_data = global_response.json().get('data', {})
         
-        # Get top coins for indices
-        market_url = f"{COINGECKO_API_BASE}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1"
+        # Get top 100 coins for better market trend analysis
+        market_url = f"{COINGECKO_API_BASE}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1"
         market_response = requests.get(market_url)
         
         if market_response.status_code != 200:
             return jsonify({"error": "Failed to fetch market data"}), 500
             
         coins_data = market_response.json()
+        
+        # Calculate actual trending percentages
+        total_coins = len(coins_data)
+        up_trending_coins = sum(1 for coin in coins_data if coin.get('price_change_percentage_24h', 0) > 0)
+        down_trending_coins = total_coins - up_trending_coins
+        
+        up_trending_percent = round((up_trending_coins / total_coins) * 100) if total_coins > 0 else 0
+        down_trending_percent = round((down_trending_coins / total_coins) * 100) if total_coins > 0 else 0
         
         # Prepare the response structure
         market_overview = {
@@ -256,8 +264,8 @@ def get_crypto_market_overview():
                 "dex": {"name": "DEX", "change_percent": global_data.get('market_cap_change_percentage_24h_usd', 0) + 0.5}
             },
             "market_data": {
-                "up_trending": 55,  # Percentage of coins trending up (approximation)
-                "down_trending": 45  # Percentage of coins trending down (approximation)
+                "up_trending": up_trending_percent,  # Real percentage of coins trending up
+                "down_trending": down_trending_percent  # Real percentage of coins trending down
             },
             "gainers": {},
             "losers": {},
@@ -265,7 +273,9 @@ def get_crypto_market_overview():
         }
         
         # Calculate gainers and losers
-        sorted_by_change = sorted(coins_data, key=lambda x: x.get('price_change_percentage_24h', 0) or 0, reverse=True)
+        # Filter out coins with None price_change_percentage_24h
+        valid_coins = [c for c in coins_data if c.get('price_change_percentage_24h') is not None]
+        sorted_by_change = sorted(valid_coins, key=lambda x: x.get('price_change_percentage_24h', 0), reverse=True)
         
         # Top 5 gainers
         for coin in sorted_by_change[:5]:
@@ -288,7 +298,7 @@ def get_crypto_market_overview():
     except Exception as e:
         print(f"Error fetching crypto market overview: {e}")
         return jsonify({"error": str(e)}), 500
-
+    
 @crypto_bp.route('/api/cryptos_by_category', methods=['GET'])
 def get_cryptos_by_category():
     # Get category from query parameters

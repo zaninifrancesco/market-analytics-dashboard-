@@ -6,7 +6,8 @@ import {
 } from 'recharts';
 import { 
   TrendingUpIcon, TrendingDownIcon, DollarSignIcon, BarChart3Icon,
-  CalendarIcon, BriefcaseIcon, GlobeIcon, NewspaperIcon, InfoIcon
+  CalendarIcon, BriefcaseIcon, GlobeIcon, NewspaperIcon, InfoIcon,
+  ActivityIcon, TrendingUpIcon as UpIcon, TrendingDownIcon as DownIcon
 } from 'lucide-react';
 import Header from '../components/Header';
 import LoadingSkeleton from '../components/LoadingSkeleton';
@@ -14,7 +15,9 @@ import LoadingSkeleton from '../components/LoadingSkeleton';
 const StockDetails = () => {
   const { symbol } = useParams();
   const [stockData, setStockData] = useState(null);
+  const [indicators, setIndicators] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingIndicators, setLoadingIndicators] = useState(true);
   const [timeframe, setTimeframe] = useState('1d');
   const [chartType, setChartType] = useState('line');
   const [error, setError] = useState(null);
@@ -40,6 +43,29 @@ const StockDetails = () => {
 
     fetchStockData();
   }, [symbol, timeframe]);
+
+  useEffect(() => {
+    const fetchTechnicalIndicators = async () => {
+      if (!symbol) return;
+      
+      setLoadingIndicators(true);
+      try {
+        const response = await fetch(`http://localhost:5000/api/technical_indicators/${symbol}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch technical indicators');
+        }
+        const data = await response.json();
+        setIndicators(data);
+      } catch (err) {
+        console.error('Error fetching technical indicators:', err);
+        // We don't set the main error state here to avoid blocking the main content
+      } finally {
+        setLoadingIndicators(false);
+      }
+    };
+
+    fetchTechnicalIndicators();
+  }, [symbol]);
 
   const formatTooltipValue = (value) => {
     return value ? `$${value.toFixed(2)}` : 'N/A';
@@ -72,6 +98,68 @@ const StockDetails = () => {
       change: change.toFixed(2),
       percentChange: percentChange.toFixed(2)
     };
+  };
+
+  // Get indicator status class
+  const getIndicatorStatusClass = (indicator, value) => {
+    if (indicator === 'RSI') {
+      if (value < 30) return 'text-green-600';
+      if (value > 70) return 'text-red-600';
+      return 'text-yellow-600';
+    }
+    
+    if (indicator === 'SMA_50' || indicator === 'EMA_20') {
+      if (stockData?.company?.current_price > value) return 'text-green-600';
+      return 'text-red-600';
+    }
+    
+    return 'text-blue-600';
+  };
+  
+  // Get indicator description
+  const getIndicatorDescription = (indicator, value) => {
+    if (indicator === 'RSI') {
+      if (value < 30) return 'Oversold - Potential buy signal';
+      if (value > 70) return 'Overbought - Potential sell signal';
+      return 'Neutral';
+    }
+    
+    if (indicator === 'SMA_50') {
+      const price = stockData?.company?.current_price;
+      if (price > value) return `Price above 50-day SMA by ${((price/value - 1) * 100).toFixed(2)}%`;
+      return `Price below 50-day SMA by ${((1 - price/value) * 100).toFixed(2)}%`;
+    }
+    
+    if (indicator === 'EMA_20') {
+      const price = stockData?.company?.current_price;
+      if (price > value) return `Price above 20-day EMA by ${((price/value - 1) * 100).toFixed(2)}%`;
+      return `Price below 20-day EMA by ${((1 - price/value) * 100).toFixed(2)}%`;
+    }
+    
+    if (indicator === 'VWAP') {
+      const price = stockData?.company?.current_price;
+      if (price > value) return `Price above VWAP - Bullish signal`;
+      return `Price below VWAP - Bearish signal`;
+    }
+    
+    return '';
+  };
+
+  // Get indicator icon
+  const getIndicatorIcon = (indicator, value) => {
+    if (indicator === 'RSI') {
+      if (value < 30) return <UpIcon size={16} className="text-green-600" />;
+      if (value > 70) return <DownIcon size={16} className="text-red-600" />;
+      return <ActivityIcon size={16} className="text-yellow-600" />;
+    }
+    
+    if (indicator === 'SMA_50' || indicator === 'EMA_20' || indicator === 'VWAP') {
+      const price = stockData?.company?.current_price;
+      if (price > value) return <UpIcon size={16} className="text-green-600" />;
+      return <DownIcon size={16} className="text-red-600" />;
+    }
+    
+    return <InfoIcon size={16} className="text-blue-600" />;
   };
 
   const renderChart = () => {
@@ -401,29 +489,65 @@ const StockDetails = () => {
                     </div>
                   </div>
 
-                  {/* Recent News */}
-                  {stockData.company.news && stockData.company.news.length > 0 && (
-                    <div className="bg-white p-6 rounded-xl shadow-md">
-                      <h2 className="text-xl font-bold text-gray-800 mb-4">Recent News</h2>
-                      <div className="space-y-4">
-                        {stockData.company.news.map((item, index) => (
-                          <a 
-                            key={index} 
-                            href={item.link} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="block p-3 hover:bg-gray-50 rounded-lg transition-colors duration-200"
-                          >
-                            <div className="font-medium text-blue-600 hover:text-blue-800">{item.title}</div>
-                            <div className="flex justify-between mt-2 text-xs text-gray-500">
-                              <span>{item.publisher}</span>
-                              <span>{new Date(item.published).toLocaleString()}</span>
-                            </div>
-                          </a>
-                        ))}
+                  {/* Technical Indicators - Replacing Recent News section */}
+                  <div className="bg-white p-6 rounded-xl shadow-md">
+                    <h2 className="text-xl font-bold text-gray-800 mb-4">Technical Indicators</h2>
+                    
+                    {loadingIndicators ? (
+                      <div className="flex justify-center items-center py-8">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                        <span className="ml-2 text-gray-500">Loading indicators...</span>
                       </div>
-                    </div>
-                  )}
+                    ) : !indicators ? (
+                      <div className="text-center py-6 text-gray-500">
+                        No technical data available
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {indicators.indicators && Object.entries(indicators.indicators).map(([key, value]) => (
+                          <div key={key} className="border-b border-gray-100 pb-3 last:border-b-0 last:pb-0">
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center">
+                                {getIndicatorIcon(key, value)}
+                                <span className="ml-2 font-medium text-gray-800">
+                                  {key === 'RSI' ? 'RSI (14)' : 
+                                   key === 'SMA_50' ? 'SMA (50)' : 
+                                   key === 'EMA_20' ? 'EMA (20)' : 'VWAP (20)'}
+                                </span>
+                              </div>
+                              <span className={`font-semibold ${getIndicatorStatusClass(key, value)}`}>
+                                {value ? value.toFixed(2) : 'N/A'}
+                              </span>
+                            </div>
+                            <div className="mt-1 text-xs text-gray-600">
+                              {getIndicatorDescription(key, value)}
+                            </div>
+                          </div>
+                        ))}
+                        
+                        {indicators.signals && indicators.signals.length > 0 && (
+                          <div className="mt-4">
+                            <h3 className="text-sm font-medium text-gray-700 mb-2">Signals</h3>
+                            <div className="space-y-2">
+                              {indicators.signals.map((signal, idx) => (
+                                <div 
+                                  key={idx} 
+                                  className={`text-xs p-2 rounded-md ${
+                                    signal.signal === 'Oversold' || signal.signal === 'Above' 
+                                      ? 'bg-green-50 text-green-800'
+                                      : 'bg-red-50 text-red-800'
+                                  }`}
+                                >
+                                  <span className="font-medium">{signal.indicator}:</span> {signal.signal} 
+                                  {signal.strength && <span className="ml-1">({signal.strength})</span>}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
