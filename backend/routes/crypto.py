@@ -348,3 +348,38 @@ def get_cryptos_by_category():
     except Exception as e:
         print(f"Error fetching cryptos by category: {e}")
         return jsonify({"error": str(e), "coins": {}}), 500
+
+# backend/routes/crypto.py
+@crypto_bp.route('/api/crypto_batch', methods=['GET'])
+def get_crypto_batch():
+    symbols = request.args.get('symbols', '')
+    if not symbols:
+        return jsonify({'error': 'No symbols provided'}), 400
+    
+    symbol_list = symbols.split(',')
+    result = {}
+    
+    try:
+        # Build URL with multiple symbols
+        symbols_param = ','.join(symbol_list)
+        url = f"{COINGECKO_API_BASE}/coins/markets?vs_currency=usd&ids={symbols_param}"
+        
+        response = requests.get(url)
+        if response.status_code != 200:
+            return jsonify({'error': 'Failed to fetch crypto data'}), 500
+            
+        coins_data = response.json()
+        
+        for coin in coins_data:
+            symbol = coin.get('symbol', '').upper()
+            result[symbol] = {
+                'symbol': symbol,
+                'current_price': coin.get('current_price'),
+                'price_change_24h': coin.get('price_change_24h'),
+                'price_change_percentage_24h': coin.get('price_change_percentage_24h'),
+                'name': coin.get('name')
+            }
+    except Exception as e:
+        print(f"Error fetching crypto batch data: {e}")
+    
+    return jsonify(result)

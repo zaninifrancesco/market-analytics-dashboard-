@@ -393,3 +393,30 @@ def search_stock():
     except Exception as e:
         print(f"Error searching stocks: {e}")
         return jsonify([])
+    
+# backend/routes/stock.py
+@stock_bp.route('/api/stock_batch', methods=['GET'])
+def get_stock_batch():
+    symbols = request.args.get('symbols', '')
+    if not symbols:
+        return jsonify({'error': 'No symbols provided'}), 400
+    
+    symbol_list = symbols.split(',')
+    result = {}
+    
+    for symbol in symbol_list:
+        try:
+            ticker = yf.Ticker(symbol)
+            data = ticker.info
+            
+            result[symbol] = {
+                'symbol': symbol,
+                'current_price': data.get('currentPrice', None),
+                'price_change_24h': data.get('regularMarketChange', 0),
+                'price_change_percentage_24h': data.get('regularMarketChangePercent', 0) * 100,
+                'name': data.get('shortName', symbol)
+            }
+        except Exception as e:
+            print(f"Error fetching data for {symbol}: {e}")
+    
+    return jsonify(result)

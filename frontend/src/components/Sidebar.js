@@ -11,7 +11,9 @@ import {
   LayoutDashboardIcon,
   SettingsIcon,
   HelpCircleIcon,
-  LogOutIcon
+  LogOutIcon,
+  Star,
+  Bell
 } from "lucide-react";
 
 const Sidebar = () => {
@@ -71,11 +73,11 @@ const Sidebar = () => {
               active={location.pathname.includes('/crypto')}
             />
             <SidebarItem 
-              icon={<BarChart3Icon className="w-5 h-5" />} 
-              text="Analytics" 
-              to="/analytics" 
+              icon={<Star className="w-5 h-5" />} 
+              text="Watchlist" 
+              to="/watchlist" 
               collapsed={collapsed}
-              active={location.pathname === '/analytics'}
+              active={location.pathname === '/watchlist'}
             />
             <SidebarItem 
               icon={<NewspaperIcon className="w-5 h-5" />} 
@@ -83,6 +85,13 @@ const Sidebar = () => {
               to="/news" 
               collapsed={collapsed}
               active={location.pathname === '/news'}
+            />
+            <SidebarItem 
+              icon={<Bell className="w-5 h-5" />} 
+              text="Alerts" 
+              to="/alerts" 
+              collapsed={collapsed}
+              active={location.pathname === '/analytics'}
             />
           </ul>
         </nav>

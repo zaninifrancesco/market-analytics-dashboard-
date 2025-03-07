@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import WatchlistButton from '../components/WatchlistButton';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
   AreaChart, Area, BarChart, Bar
@@ -285,35 +286,38 @@ const StockDetails = () => {
             <div className="space-y-6">
               {/* Stock Header */}
               <div className="bg-white p-6 rounded-xl shadow-md">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h1 className="text-3xl font-bold text-gray-900">
-                      {stockData.company.name} ({stockData.company.symbol})
-                    </h1>
-                    <div className="mt-2 text-sm text-gray-600">
-                      <span className="mr-4">{stockData.company.sector}</span>
-                      <span>{stockData.company.industry}</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-3xl font-bold text-gray-900">
-                      {formatNumber(stockData.company.current_price)}
-                    </div>
-                    <div className={`text-sm font-medium ${parseFloat(performance.percentChange) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {parseFloat(performance.percentChange) >= 0 ? (
-                        <span className="flex items-center justify-end">
-                          <TrendingUpIcon size={16} className="mr-1" />
-                          +{performance.change} (+{performance.percentChange}%)
-                        </span>
-                      ) : (
-                        <span className="flex items-center justify-end">
-                          <TrendingDownIcon size={16} className="mr-1" />
-                          {performance.change} ({performance.percentChange}%)
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+  <div className="flex justify-between items-start">
+    <div>
+      <div className="flex items-center">
+        <h1 className="text-3xl font-bold text-gray-900 mr-2">
+          {stockData.company.name} ({stockData.company.symbol})
+        </h1>
+        <WatchlistButton symbol={stockData.company.symbol} type="stocks" />
+      </div>
+      <div className="mt-2 text-sm text-gray-600">
+        <span className="mr-4">{stockData.company.sector}</span>
+        <span>{stockData.company.industry}</span>
+      </div>
+    </div>
+    <div className="text-right">
+      <div className="text-3xl font-bold text-gray-900">
+        {formatNumber(stockData.company.current_price)}
+      </div>
+      <div className={`text-sm font-medium ${parseFloat(performance.percentChange) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+        {parseFloat(performance.percentChange) >= 0 ? (
+          <span className="flex items-center justify-end">
+            <TrendingUpIcon size={16} className="mr-1" />
+            +{performance.change} (+{performance.percentChange}%)
+          </span>
+        ) : (
+          <span className="flex items-center justify-end">
+            <TrendingDownIcon size={16} className="mr-1" />
+            {performance.change} ({performance.percentChange}%)
+          </span>
+        )}
+      </div>
+    </div>
+  </div>
 
                 {/* Chart controls */}
                 <div className="flex justify-between items-center mt-6 mb-4">
