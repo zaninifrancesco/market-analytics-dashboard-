@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import WatchlistButton from '../components/WatchlistButton';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
@@ -7,7 +7,7 @@ import {
 } from 'recharts';
 import { 
   TrendingUpIcon, TrendingDownIcon, DollarSignIcon, BarChart3Icon,
-  CalendarIcon, BriefcaseIcon, GlobeIcon, NewspaperIcon, InfoIcon,
+  CalendarIcon, BriefcaseIcon, GlobeIcon, NewspaperIcon, InfoIcon, ArrowLeftIcon,
   ActivityIcon, TrendingUpIcon as UpIcon, TrendingDownIcon as DownIcon
 } from 'lucide-react';
 import Header from '../components/Header';
@@ -15,6 +15,7 @@ import LoadingSkeleton from '../components/LoadingSkeleton';
 
 const StockDetails = () => {
   const { symbol } = useParams();
+  const navigate = useNavigate();
   const [stockData, setStockData] = useState(null);
   const [indicators, setIndicators] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -22,6 +23,10 @@ const StockDetails = () => {
   const [timeframe, setTimeframe] = useState('1d');
   const [chartType, setChartType] = useState('line');
   const [error, setError] = useState(null);
+
+  const handleBackToStocks = () => {
+    navigate('/stocks');
+  };
 
   useEffect(() => {
     const fetchStockData = async () => {
@@ -268,6 +273,16 @@ const StockDetails = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
         <main className="flex-1 p-6 overflow-auto">
+                    {/* Pulsante per tornare alla pagina delle criptovalute */}
+                    <div className="mb-4">
+            <button 
+              onClick={handleBackToStocks}
+              className="flex items-center text-gray-600 hover:text-amber-600 transition-colors"
+            >
+              <ArrowLeftIcon size={18} className="mr-1" />
+              <span>Back to Stocks</span>
+            </button>
+          </div>
           {loading ? (
             <div className="space-y-6">
               <div className="bg-white p-6 rounded-xl shadow-md">
@@ -286,38 +301,38 @@ const StockDetails = () => {
             <div className="space-y-6">
               {/* Stock Header */}
               <div className="bg-white p-6 rounded-xl shadow-md">
-  <div className="flex justify-between items-start">
-    <div>
-      <div className="flex items-center">
-        <h1 className="text-3xl font-bold text-gray-900 mr-2">
-          {stockData.company.name} ({stockData.company.symbol})
-        </h1>
-        <WatchlistButton symbol={stockData.company.symbol} type="stocks" />
-      </div>
-      <div className="mt-2 text-sm text-gray-600">
-        <span className="mr-4">{stockData.company.sector}</span>
-        <span>{stockData.company.industry}</span>
-      </div>
-    </div>
-    <div className="text-right">
-      <div className="text-3xl font-bold text-gray-900">
-        {formatNumber(stockData.company.current_price)}
-      </div>
-      <div className={`text-sm font-medium ${parseFloat(performance.percentChange) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-        {parseFloat(performance.percentChange) >= 0 ? (
-          <span className="flex items-center justify-end">
-            <TrendingUpIcon size={16} className="mr-1" />
-            +{performance.change} (+{performance.percentChange}%)
-          </span>
-        ) : (
-          <span className="flex items-center justify-end">
-            <TrendingDownIcon size={16} className="mr-1" />
-            {performance.change} ({performance.percentChange}%)
-          </span>
-        )}
-      </div>
-    </div>
-  </div>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="flex items-center">
+                      <h1 className="text-3xl font-bold text-gray-900 mr-2">
+                        {stockData.company.name} ({stockData.company.symbol})
+                      </h1>
+                      <WatchlistButton symbol={stockData.company.symbol} type="stocks" />
+                    </div>
+                    <div className="mt-2 text-sm text-gray-600">
+                      <span className="mr-4">{stockData.company.sector}</span>
+                      <span>{stockData.company.industry}</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-gray-900">
+                      {formatNumber(stockData.company.current_price)}
+                    </div>
+                    <div className={`text-sm font-medium ${parseFloat(performance.percentChange) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {parseFloat(performance.percentChange) >= 0 ? (
+                        <span className="flex items-center justify-end">
+                          <TrendingUpIcon size={16} className="mr-1" />
+                          +{performance.change} (+{performance.percentChange}%)
+                        </span>
+                      ) : (
+                        <span className="flex items-center justify-end">
+                          <TrendingDownIcon size={16} className="mr-1" />
+                          {performance.change} ({performance.percentChange}%)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
 
                 {/* Chart controls */}
                 <div className="flex justify-between items-center mt-6 mb-4">

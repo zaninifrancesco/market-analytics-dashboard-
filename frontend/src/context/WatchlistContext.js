@@ -8,26 +8,25 @@ export function useWatchlist() {
 }
 
 export const WatchlistProvider = ({ children }) => {
-  const [watchlist, setWatchlist] = useState({
-    stocks: [],
-    crypto: []
-  });
-  
-  // Carica la watchlist dal localStorage all'avvio
-  useEffect(() => {
-    const savedWatchlist = localStorage.getItem('watchlist');
-    if (savedWatchlist) {
-      try {
-        setWatchlist(JSON.parse(savedWatchlist));
-      } catch (error) {
-        console.error('Error parsing watchlist from localStorage:', error);
-      }
+  // Inizializza lo stato leggendo direttamente dal localStorage
+  const [watchlist, setWatchlist] = useState(() => {
+    try {
+      const savedWatchlist = localStorage.getItem('watchlist');
+      return savedWatchlist ? JSON.parse(savedWatchlist) : { stocks: [], crypto: [] };
+    } catch (error) {
+      console.error('Error parsing watchlist from localStorage:', error);
+      return { stocks: [], crypto: [] };
     }
-  }, []);
+  });
   
   // Aggiorna localStorage quando la watchlist cambia
   useEffect(() => {
-    localStorage.setItem('watchlist', JSON.stringify(watchlist));
+    try {
+      localStorage.setItem('watchlist', JSON.stringify(watchlist));
+      console.log('Saved to localStorage:', watchlist); // Per debugging
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+    }
   }, [watchlist]);
   
   // Aggiungi un asset alla watchlist
@@ -44,23 +43,34 @@ export const WatchlistProvider = ({ children }) => {
       }
       
       // Altrimenti aggiungi il simbolo
-      return {
+      const updated = {
         ...prev,
         [type]: [...prev[type], symbol]
       };
+      
+      console.log('Adding to watchlist, new state:', updated); // Per debugging
+      return updated;
     });
   };
   
   // Rimuovi un asset dalla watchlist
   const removeFromWatchlist = (symbol, type) => {
-    setWatchlist(prev => ({
-      ...prev,
-      [type]: prev[type].filter(item => item !== symbol)
-    }));
+    setWatchlist(prev => {
+      const updated = {
+        ...prev,
+        [type]: prev[type].filter(item => item !== symbol)
+      };
+      
+      console.log('Removing from watchlist, new state:', updated); // Per debugging
+      return updated;
+    });
   };
   
   // Verifica se un asset è nella watchlist
   const isInWatchlist = (symbol, type) => {
+    if (!watchlist || !watchlist[type]) {
+      return false;
+    }
     return watchlist[type].includes(symbol);
   };
   
@@ -77,3 +87,5 @@ export const WatchlistProvider = ({ children }) => {
     </WatchlistContext.Provider>
   );
 };
+
+export default WatchlistProvider;

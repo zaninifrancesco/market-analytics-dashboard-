@@ -159,42 +159,67 @@ def unified_search():
     except Exception as e:
         print(f"Error searching similar stocks: {e}")
     
-    # Cerca crypto
+    # Cerca crypto direttamente su CoinGecko invece di limitarci a una lista predefinita
     try:
-        crypto_symbols = ['BTC', 'ETH', 'BNB', 'XRP', 'ADA', 'SOL', 'DOGE', 'DOT', 'MATIC']
-        matched_cryptos = [s for s in crypto_symbols if query.lower() in s.lower()]
+        # Usa l'API di CoinGecko search per cercare tutte le crypto che corrispondono alla query
+        coingecko_search_url = f"https://api.coingecko.com/api/v3/search?query={query}"
+        search_response = requests.get(coingecko_search_url, timeout=5)
         
-        for symbol in matched_cryptos[:3]:  # Limita a 3 risultati
-            try:
-                # Usa l'API di CoinGecko per ottenere informazioni sulle crypto
-                coingecko_search_url = f"https://api.coingecko.com/api/v3/search?query={symbol}"
-                search_response = requests.get(coingecko_search_url, timeout=2)
+        if search_response.status_code == 200:
+            search_data = search_response.json()
+            coins = search_data.get('coins', [])
+            
+            # Prendi i primi 5 risultati rilevanti
+            for coin in coins[:5]:
+                symbol = coin.get('symbol', '').upper()
                 
-                if search_response.status_code == 200:
-                    search_data = search_response.json()
-                    coins = search_data.get('coins', [])
-                    if coins:
-                        coin = coins[0]
-                        results.append({
-                            'type': 'crypto',
-                            'symbol': symbol,
-                            'name': coin.get('name', f"{symbol} Cryptocurrency"),
-                            'image': coin.get('large', ''),
-                            'market_cap_rank': coin.get('market_cap_rank', 'N/A'),
-                            'url': f"/crypto/{symbol}"
-                        })
-            except Exception:
-                # Fallback semplice se l'API fallisce
+                # Evita duplicati
+                if not any(r.get('symbol') == symbol and r.get('type') == 'crypto' for r in results):
+                    results.append({
+                        'type': 'crypto',
+                        'symbol': symbol,
+                        'id': coin.get('id', ''),
+                        'name': coin.get('name', f"{symbol} Cryptocurrency"),
+                        'image': coin.get('large', ''),
+                        'market_cap_rank': coin.get('market_cap_rank', 'N/A'),
+                        'url': f"/crypto/{symbol}"
+                    })
+        else:
+            print(f"CoinGecko API returned status code: {search_response.status_code}")
+            
+            # Fallback a ricerca limitata se l'API fallisce
+            crypto_symbols = ['BTC', 'ETH', 'BNB', 'XRP', 'ADA', 'SOL', 'DOGE', 'DOT', 'MATIC']
+            matched_cryptos = [s for s in crypto_symbols if query.lower() in s.lower()]
+            
+            for symbol in matched_cryptos[:3]:
                 results.append({
                     'type': 'crypto',
                     'symbol': symbol,
                     'name': f"{symbol} Cryptocurrency",
                     'url': f"/crypto/{symbol}"
                 })
+            
     except Exception as e:
-        print(f"Error searching cryptos: {e}")
+        print(f"Error searching cryptos with CoinGecko API: {e}")
+        
+        # Fallback in caso di errore con l'API
+        try:
+            crypto_symbols = ['BTC', 'ETH', 'BNB', 'XRP', 'ADA', 'SOL', 'DOGE', 'DOT', 'MATIC']
+            matched_cryptos = [s for s in crypto_symbols if query.lower() in s.lower()]
+            
+            for symbol in matched_cryptos[:3]:
+                results.append({
+                    'type': 'crypto',
+                    'symbol': symbol,
+                    'name': f"{symbol} Cryptocurrency",
+                    'url': f"/crypto/{symbol}"
+                })
+        except Exception:
+            pass
     
+    print(f"Search results for '{query}': {len(results)} items found")
     return jsonify({'results': results[:10]})  # Limita a 10 risultati totali
+
 
 @search_bp.route('/api/top_symbols', methods=['GET'])
 def get_top_symbols():

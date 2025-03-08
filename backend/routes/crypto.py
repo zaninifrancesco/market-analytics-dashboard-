@@ -349,7 +349,6 @@ def get_cryptos_by_category():
         print(f"Error fetching cryptos by category: {e}")
         return jsonify({"error": str(e), "coins": {}}), 500
 
-# backend/routes/crypto.py
 @crypto_bp.route('/api/crypto_batch', methods=['GET'])
 def get_crypto_batch():
     symbols = request.args.get('symbols', '')
@@ -360,26 +359,65 @@ def get_crypto_batch():
     result = {}
     
     try:
-        # Build URL with multiple symbols
-        symbols_param = ','.join(symbol_list)
-        url = f"{COINGECKO_API_BASE}/coins/markets?vs_currency=usd&ids={symbols_param}"
-        
-        response = requests.get(url)
-        if response.status_code != 200:
-            return jsonify({'error': 'Failed to fetch crypto data'}), 500
+        # Prima, otteniamo il mapping tra simboli e ID CoinGecko
+        search_results = {}
+        for symbol in symbol_list:
+            # Rimuovi eventuali USDT e rendi tutto minuscolo
+            clean_symbol = symbol.lower().replace('usdt', '')
             
-        coins_data = response.json()
+            # Cerca l'ID CoinGecko per questo simbolo
+            search_url = f"{COINGECKO_API_BASE}/search?query={clean_symbol}"
+            search_response = requests.get(search_url)
+            
+            if search_response.status_code == 200 and search_response.json().get('coins'):
+                coins = search_response.json().get('coins', [])
+                if coins:
+                    # Prendiamo il primo risultato (più rilevante)
+                    search_results[symbol.upper()] = {
+                        'id': coins[0]['id'],
+                        'name': coins[0]['name']
+                    }
         
-        for coin in coins_data:
-            symbol = coin.get('symbol', '').upper()
-            result[symbol] = {
-                'symbol': symbol,
-                'current_price': coin.get('current_price'),
-                'price_change_24h': coin.get('price_change_24h'),
-                'price_change_percentage_24h': coin.get('price_change_percentage_24h'),
-                'name': coin.get('name')
-            }
+        # Ora raccogliamo i dati per ogni ID trovato
+        if search_results:
+            ids = [info['id'] for info in search_results.values()]
+            ids_param = '%2C'.join(ids)  # URL-encoded comma
+            url = f"{COINGECKO_API_BASE}/coins/markets?vs_currency=usd&ids={ids_param}"
+            
+            response = requests.get(url)
+            if response.status_code != 200:
+                return jsonify({'error': f'Failed to fetch crypto data: {response.status_code}'}), 500
+                
+            coins_data = response.json()
+            
+            # Build reverse mapping from id to symbol
+            id_to_symbol = {info['id']: symbol for symbol, info in search_results.items()}
+            
+            for coin in coins_data:
+                coin_id = coin.get('id')
+                if coin_id in id_to_symbol:
+                    symbol = id_to_symbol[coin_id]
+                    result[symbol] = {
+                        'symbol': symbol,
+                        'current_price': coin.get('current_price'),
+                        'price_change_24h': coin.get('price_change_24h'),
+                        'price_change_percentage_24h': coin.get('price_change_percentage_24h'),
+                        'name': coin.get('name')
+                    }
+            
+            # Add placeholder for symbols that weren't found
+            for symbol in symbol_list:
+                upper_symbol = symbol.upper()
+                if upper_symbol not in result:
+                    result[upper_symbol] = {
+                        'symbol': upper_symbol,
+                        'current_price': 0,
+                        'price_change_24h': 0,
+                        'price_change_percentage_24h': 0,
+                        'name': f"Unknown ({upper_symbol})"
+                    }
     except Exception as e:
         print(f"Error fetching crypto batch data: {e}")
     
+    print("Returning result:", result)  # Debug output
     return jsonify(result)

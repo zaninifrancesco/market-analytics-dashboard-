@@ -1,24 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
   AreaChart, Area, BarChart, Bar
 } from 'recharts';
 import { 
   TrendingUpIcon, TrendingDownIcon, BarChart3Icon,
-  GlobeIcon, BitcoinIcon, DollarSignIcon, InfoIcon
+  GlobeIcon, BitcoinIcon, DollarSignIcon, InfoIcon, ArrowLeftIcon
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import LoadingSkeleton from '../components/LoadingSkeleton';
+import WatchlistButton from '../components/WatchlistButton';
+
 
 const CryptoDetails = () => {
   const { symbol } = useParams();
+  const navigate = useNavigate();
   const [cryptoData, setCryptoData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState('1d');
   const [chartType, setChartType] = useState('line');
   const [error, setError] = useState(null);
+
+  const handleBackToCryptos = () => {
+    navigate('/crypto');
+  };
 
   // Map timeframe selections to API parameters for Binance API
   const timeframeToInterval = {
@@ -188,6 +195,16 @@ const CryptoDetails = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
         <main className="flex-1 p-6 overflow-auto">
+                    {/* Pulsante per tornare alla pagina delle criptovalute */}
+                    <div className="mb-4">
+            <button 
+              onClick={handleBackToCryptos}
+              className="flex items-center text-gray-600 hover:text-amber-600 transition-colors"
+            >
+              <ArrowLeftIcon size={18} className="mr-1" />
+              <span>Back to Cryptocurrencies</span>
+            </button>
+          </div>
           {loading ? (
             <div className="space-y-6">
               <div className="bg-white p-6 rounded-xl shadow-md">
@@ -219,11 +236,14 @@ const CryptoDetails = () => {
                         )}
                         {!cryptoInfo.image && <BitcoinIcon className="mr-2 text-amber-500" size={28} />}
                         {symbol.toUpperCase().replace('USDT', '')} 
+                        <WatchlistButton symbol={cryptoInfo.symbol} type="crypto" className="ml-10" />
                       </span>
+                      
                     </h1>
                     <div className="mt-2 text-sm text-gray-600">
                       <span className="mr-4">Cryptocurrency</span>
                       <span>{cryptoInfo.name || 'Digital Asset'}</span>
+                    
                     </div>
                   </div>
                   <div className="text-right">

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { TrendingUpIcon, ArrowUpIcon, ArrowDownIcon, ExternalLinkIcon, AlertCircleIcon } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import WatchlistButton from './WatchlistButton';
 
 const StocksList = () => {
   const [stocks, setStocks] = useState({});
@@ -111,10 +112,20 @@ const StocksList = () => {
           stockEntries.map(([symbol, stock]) => (
             <div 
               key={symbol} 
-              className="bg-white border border-gray-100 rounded-xl p-4 hover:shadow-md transition-all duration-200 cursor-pointer group"
+              className="bg-white border border-gray-100 rounded-xl p-4 hover:shadow-md transition-all duration-200 cursor-pointer group relative"
               onClick={() => handleStockClick(symbol)}
             >
-              <div className="flex justify-between items-center">
+              {/* Watchlist Button - posizionato a sinistra e più piccolo */}
+              <div 
+                className="absolute left-2 top-1/2 transform -translate-y-1/2" 
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="scale-75 transform-origin-center">
+                  <WatchlistButton symbol={symbol} type="stocks" />
+                </div>
+              </div>
+              
+              <div className="flex justify-between items-center pl-10">
                 <div className="flex flex-col">
                   <div className="flex items-center">
                     <span className="text-lg font-bold text-gray-900">{symbol}</span>

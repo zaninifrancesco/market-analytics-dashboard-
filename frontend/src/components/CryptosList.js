@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { BitcoinIcon, ArrowUpIcon, ArrowDownIcon, ExternalLinkIcon } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import WatchlistButton from './WatchlistButton';
 
 const CryptosList = () => {
   const [cryptos, setCryptos] = useState({});
@@ -103,10 +104,20 @@ const CryptosList = () => {
           Object.entries(cryptos).map(([symbol, crypto]) => (
             <div 
               key={symbol} 
-              className="bg-white border border-gray-100 rounded-xl p-4 hover:shadow-md transition-all duration-200 cursor-pointer group"
+              className="bg-white border border-gray-100 rounded-xl p-4 hover:shadow-md transition-all duration-200 cursor-pointer group relative"
               onClick={() => handleCryptoClick(symbol)}
             >
-              <div className="flex justify-between items-center">
+              {/* Watchlist Button - posizionato a sinistra */}
+              <div 
+                className="absolute left-2 top-1/2 transform -translate-y-1/2" 
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="scale-75 transform-origin-center">
+                  <WatchlistButton symbol={symbol} type="crypto" />
+                </div>
+              </div>
+              
+              <div className="flex justify-between items-center pl-9">
                 <div className="flex flex-col">
                   <div className="flex items-center">
                     <span className="text-lg font-bold text-gray-900">{symbol}</span>
