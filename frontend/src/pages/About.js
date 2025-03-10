@@ -139,8 +139,7 @@ const About = () => {
 
                 <div className="text-center border-t border-gray-100 pt-8">
                   <p className="text-gray-600 mb-6">
-                    If you're interested in finance, data analysis, or web development, 
-                    I'd love to connect with you on LinkedIn or discuss potential collaborations on this project.
+                    Feel free to open a pull request on GitHub or reach out to me for any questions or feedback.
                   </p>
                   
                   <div className="flex items-center justify-center text-gray-400 text-sm">
