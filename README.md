@@ -3,7 +3,7 @@
 
 <div align="center">
 
-![Dashboard Preview](dashboard.png)
+![Dashboard Preview](screenshots/dashboard.png)
 
 **A comprehensive financial market analytics platform built with React & Flask**
 
