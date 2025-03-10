@@ -55,9 +55,9 @@ An advanced price alert system notifies users of market movements based on custo
 ## 🖥️ Screenshots
 
 <div align="center">
-  <img src="screenshots/dashboard.png" alt="Dashboard" width="45%">
-  <img src="screenshots/chart.png" alt="Chart" width="45%">
-  <img src="screenshots/alert.png" alt="alert" width="45%">
+  <img src="screenshots/dashboard.png" alt="Dashboard" width="80%">
+  <img src="screenshots/chart.png" alt="Chart" width="80%">
+  <img src="screenshots/alert.png" alt="alert" width="80%">
 </div>
 
 ## 🏗️ Architecture
