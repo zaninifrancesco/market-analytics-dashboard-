@@ -159,7 +159,7 @@ def unified_search():
     except Exception as e:
         print(f"Error searching similar stocks: {e}")
     
-    # Cerca crypto direttamente su CoinGecko invece di limitarci a una lista predefinita
+    # Cerca crypto direttamente su CoinGecko
     try:
         # Usa l'API di CoinGecko search per cercare tutte le crypto che corrispondono alla query
         coingecko_search_url = f"https://api.coingecko.com/api/v3/search?query={query}"
@@ -224,8 +224,6 @@ def unified_search():
 @search_bp.route('/api/top_symbols', methods=['GET'])
 def get_top_symbols():
     try:
-        # Call the functions directly without making HTTP requests
-        # This is much more efficient
         
         # Get top stocks data
         stocks_response = fetch_top_stocks()

@@ -12,7 +12,7 @@ app = Flask(__name__)
 
 CORS(app)
 
-# Registrazione delle route
+# Routes
 app.register_blueprint(stock_bp)
 app.register_blueprint(crypto_bp)
 app.register_blueprint(news_bp)

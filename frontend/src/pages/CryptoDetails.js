@@ -12,8 +12,13 @@ import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import WatchlistButton from '../components/WatchlistButton';
+import AlertButton from '../components/AlertButton';
 
-
+/**
+ * Crypto Details page component.
+ * Displays detailed information about a specific cryptocurrency including price chart, 
+ * market data, price statistics, and social links.
+ */
 const CryptoDetails = () => {
   const { symbol } = useParams();
   const navigate = useNavigate();
@@ -23,11 +28,16 @@ const CryptoDetails = () => {
   const [chartType, setChartType] = useState('line');
   const [error, setError] = useState(null);
 
+  /**
+   * Navigates back to the cryptocurrencies listing page
+   */
   const handleBackToCryptos = () => {
     navigate('/crypto');
   };
 
-  // Map timeframe selections to API parameters for Binance API
+  /**
+   * Maps timeframe selections to API parameters for Binance API
+   */
   const timeframeToInterval = {
     '1d': '5m',
     '5d': '1h',
@@ -42,7 +52,6 @@ const CryptoDetails = () => {
     const fetchCryptoData = async () => {
       setLoading(true);
       try {
-        // Fetch crypto data - nota che il simbolo deve essere formattato correttamente (in maiuscolo)
         const response = await fetch(`http://localhost:5000/api/crypto_data/${symbol.toUpperCase()}?period=${timeframe}`);
 
         if (!response.ok) {
@@ -68,14 +77,23 @@ const CryptoDetails = () => {
     fetchCryptoData();
   }, [symbol, timeframe]);
 
+  /**
+   * Formats tooltip values with dollar sign and 2 decimal places
+   * @param {number} value - The price value to format
+   * @returns {string} Formatted value string
+   */
   const formatTooltipValue = (value) => {
     return value ? `$${parseFloat(value).toFixed(2)}` : 'N/A';
   };
 
+  /**
+   * Formats large numbers with appropriate suffixes (B, M)
+   * @param {number} num - The number to format
+   * @returns {string} Formatted number string
+   */
   const formatNumber = (num) => {
     if (num === null || num === undefined || num === 'N/A') return 'N/A';
     
-    // For market cap, format in billions/millions
     if (num > 1000000000) {
       return `$${(num / 1000000000).toFixed(2)}B`;
     } else if (num > 1000000) {
@@ -85,6 +103,11 @@ const CryptoDetails = () => {
     }
   };
 
+  /**
+   * Calculates price change performance metrics
+   * @param {Array} data - Historical price data array
+   * @returns {Object} Object containing change and percentChange values
+   */
   const calculatePerformance = (data) => {
     if (!data || data.length < 2) return { change: 0, percentChange: 0 };
     
@@ -100,6 +123,10 @@ const CryptoDetails = () => {
     };
   };
 
+  /**
+   * Renders the appropriate chart based on selected chart type
+   * @returns {JSX.Element} Chart component
+   */
   const renderChart = () => {
     if (!cryptoData || !cryptoData.historical_data || cryptoData.historical_data.length === 0) {
       return <div className="text-center p-6">No chart data available</div>;
@@ -179,12 +206,10 @@ const CryptoDetails = () => {
     }
   };
 
-  // Calcoliamo la performance solo se abbiamo dati disponibili
   const performance = cryptoData && cryptoData.historical_data && cryptoData.historical_data.length > 0
     ? calculatePerformance(cryptoData.historical_data)
     : { change: 0, percentChange: 0 };
 
-  // Ottieni i dati della crypto
   const cryptoInfo = cryptoData?.crypto || {};
   const lastPrice = cryptoData?.historical_data?.length > 0 
     ? cryptoData.historical_data[cryptoData.historical_data.length - 1].close 
@@ -195,8 +220,7 @@ const CryptoDetails = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
         <main className="flex-1 p-6 overflow-auto">
-                    {/* Pulsante per tornare alla pagina delle criptovalute */}
-                    <div className="mb-4">
+          <div className="mb-4">
             <button 
               onClick={handleBackToCryptos}
               className="flex items-center text-gray-600 hover:text-amber-600 transition-colors"
@@ -221,7 +245,6 @@ const CryptoDetails = () => {
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Crypto Header */}
               <div className="bg-white p-6 rounded-xl shadow-md">
                 <div className="flex justify-between items-start">
                   <div>
@@ -236,9 +259,15 @@ const CryptoDetails = () => {
                         )}
                         {!cryptoInfo.image && <BitcoinIcon className="mr-2 text-amber-500" size={28} />}
                         {symbol.toUpperCase().replace('USDT', '')} 
-                        <WatchlistButton symbol={cryptoInfo.symbol} type="crypto" className="ml-10" />
+                        <div className="flex items-center ml-4">
+                          <WatchlistButton symbol={cryptoInfo.symbol} type="crypto" className="mr-4" />
+                          <AlertButton 
+                            symbol={symbol} 
+                            currentPrice={parseFloat(lastPrice || cryptoInfo.current_price || 0)} 
+                            assetType="crypto" 
+                          />
+                        </div>
                       </span>
-                      
                     </h1>
                     <div className="mt-2 text-sm text-gray-600">
                       <span className="mr-4">Cryptocurrency</span>
@@ -266,7 +295,6 @@ const CryptoDetails = () => {
                   </div>
                 </div>
 
-                {/* Chart controls */}
                 <div className="flex justify-between items-center mt-6 mb-4">
                   <div className="flex space-x-2">
                     {['1d', '5d', '1mo', '3mo', '6mo', '1y', '5y'].map(period => (
@@ -305,16 +333,13 @@ const CryptoDetails = () => {
                   </div>
                 </div>
 
-                {/* Crypto Chart */}
                 <div className="mt-4">
                   {renderChart()}
                 </div>
               </div>
 
-              {/* Crypto Details */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
-                  {/* Price Statistics */}
                   <div className="bg-white p-6 rounded-xl shadow-md">
                     <h2 className="text-xl font-bold text-gray-800 mb-4">Price Statistics</h2>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -357,7 +382,6 @@ const CryptoDetails = () => {
                     </div>
                   </div>
 
-                  {/* About */}
                   <div className="bg-white p-6 rounded-xl shadow-md">
                     <h2 className="text-xl font-bold text-gray-800 mb-4">About {symbol.toUpperCase().replace('USDT', '')}</h2>
                     <p className="text-gray-700">
@@ -378,7 +402,6 @@ const CryptoDetails = () => {
                     )}
                   </div>
 
-                  {/* Market Data */}
                   <div className="bg-white p-6 rounded-xl shadow-md">
                     <h2 className="text-xl font-bold text-gray-800 mb-4">Market Data</h2>
                     <div className="grid grid-cols-2 gap-4">
@@ -414,9 +437,7 @@ const CryptoDetails = () => {
                   </div>
                 </div>
 
-                {/* Sidebar content */}
                 <div className="space-y-6">
-                  {/* Market Sentiment */}
                   <div className="bg-white p-6 rounded-xl shadow-md">
                     <h2 className="text-xl font-bold text-gray-800 mb-4">Market Sentiment</h2>
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -461,8 +482,6 @@ const CryptoDetails = () => {
                     </div>
                   </div>
 
-
-                  {/* Social Links */}
                   {cryptoInfo.links && (
                     <div className="bg-white p-6 rounded-xl shadow-md">
                       <h2 className="text-xl font-bold text-gray-800 mb-4">Social Links</h2>

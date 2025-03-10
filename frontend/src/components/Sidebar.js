@@ -13,7 +13,9 @@ import {
   HelpCircleIcon,
   LogOutIcon,
   Star,
-  Bell
+  InfoIcon,
+  Bell,
+  Icon
 } from "lucide-react";
 
 const Sidebar = () => {
@@ -101,27 +103,12 @@ const Sidebar = () => {
       <div className={`mt-auto ${collapsed ? 'border-t border-gray-200 pt-4' : 'border-t border-gray-200 pt-4'}`}>
         <ul className="space-y-3">
           <SidebarItem 
-            icon={<SettingsIcon className="w-5 h-5" />} 
-            text="Settings" 
-            to="/settings" 
+            icon={<InfoIcon className="w-5 h-5" />} 
+            text="About" 
+            to="/about" 
             collapsed={collapsed}
-            active={location.pathname === '/settings'}
+            active={location.pathname === '/about'}
           />
-          <SidebarItem 
-            icon={<HelpCircleIcon className="w-5 h-5" />} 
-            text="Help" 
-            to="/help" 
-            collapsed={collapsed}
-            active={location.pathname === '/help'}
-          />
-          <li>
-            <button className={`w-full flex items-center p-3 ${collapsed ? 'justify-center' : 'justify-start'} rounded-lg hover:bg-red-50 transition-all duration-200`}>
-              <span className="text-red-500">
-                <LogOutIcon className="w-5 h-5" />
-              </span>
-              {!collapsed && <span className="font-medium ml-3 text-red-500">Logout</span>}
-            </button>
-          </li>
         </ul>
       </div>
     </aside>

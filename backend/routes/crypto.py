@@ -1,23 +1,58 @@
-# routes/crypto.py
 from flask import Blueprint, jsonify, request
 import requests
 from datetime import datetime, timedelta
+from config import COINGECKO_API_KEY
 
 crypto_bp = Blueprint('crypto_bp', __name__)
 
-# Costante API
+# API Constants
 COINGECKO_API_BASE = "https://api.coingecko.com/api/v3"
+COINGECKO_PRO_API_BASE = "https://api.coingecko.com/api/v3"
 
-# Endpoint per dati delle criptovalute
+def make_coingecko_request(endpoint, params=None):
+    """
+    Makes a request to the CoinGecko API using the API key if available.
+    Falls back to public API with rate limits if no key is available.
+    
+    Args:
+        endpoint: API endpoint to call
+        params: Optional query parameters
+        
+    Returns:
+        Response from the API
+    """
+    if COINGECKO_API_KEY:
+        url = f"{COINGECKO_PRO_API_BASE}/{endpoint}"
+        if params is None:
+            params = {}
+        params['x_cg_demo_api_key'] = COINGECKO_API_KEY
+        response = requests.get(url, params=params)
+        print(response.url)
+    else:
+        url = f"{COINGECKO_API_BASE}/{endpoint}"
+        response = requests.get(url, params=params)
+        print(f"Using public API: {url}")
+    
+    return response
+
 @crypto_bp.route('/api/crypto_data/<string:symbol>', methods=['GET'])
 def get_crypto_data(symbol):
-    # Parametri per la richiesta
+    """
+    Get detailed cryptocurrency data for a specific symbol with historical price data.
+    
+    Args:
+        symbol: Cryptocurrency symbol (e.g. 'btc', 'eth')
+        
+    Query Parameters:
+        period: Time period for historical data (default: '1d')
+        
+    Returns:
+        JSON with cryptocurrency data and historical price chart data
+    """
     period = request.args.get('period', default='1d', type=str)
     
-    # Formatta il simbolo per CoinGecko (senza USDT, tutto lowercase)
     coingecko_symbol = symbol.lower().replace('usdt', '')
     
-    # Mapping dei periodi ai giorni per CoinGecko
     days_map = {
         '1d': 1, 
         '5d': 5, 
@@ -29,13 +64,11 @@ def get_crypto_data(symbol):
     }
     days = days_map.get(period, 1)
     
-    # Preparazione del risultato
     crypto_data = {}
     
     try:
-        # 1. Cerca l'ID CoinGecko per questo simbolo
-        search_url = f"{COINGECKO_API_BASE}/search?query={coingecko_symbol}"
-        search_response = requests.get(search_url)
+        search_response = make_coingecko_request(f"search", {"query": coingecko_symbol})
+        print(search_response)
         
         if search_response.status_code != 200 or not search_response.json().get('coins'):
             return jsonify({"error": f"Symbol not found: {symbol}"}), 404
@@ -46,21 +79,17 @@ def get_crypto_data(symbol):
             
         coin_id = coins[0]['id']
         
-        # 2. Ottieni i dati storici per i grafici
-        market_chart_url = f"{COINGECKO_API_BASE}/coins/{coin_id}/market_chart?vs_currency=usd&days={days}"
-        chart_response = requests.get(market_chart_url)
+        chart_response = make_coingecko_request(f"coins/{coin_id}/market_chart", {"vs_currency": "usd", "days": days})
         
-        if chart_response.status_code != 200:
+        if (chart_response.status_code != 200):
             return jsonify({"error": f"Failed to fetch market data: {chart_response.status_code}"}), chart_response.status_code
         
         chart_data = chart_response.json()
         
-        # Formatta i dati nel formato atteso
         prices = chart_data.get('prices', [])
         volumes = chart_data.get('total_volumes', [])
         
-        # Determina intervallo appropriato in base al periodo selezionato
-        data_points = min(300, len(prices))  # Limita a massimo 300 punti dati
+        data_points = min(300, len(prices))
         step = max(1, len(prices) // data_points)
         
         historical_data = []
@@ -68,11 +97,9 @@ def get_crypto_data(symbol):
             timestamp, price = prices[i]
             volume = volumes[i][1] if i < len(volumes) else 0
             
-            # Genera OHLC utilizzando punti adiacenti per simulare candlestick
             high = price
             low = price
             
-            # Utilizza il punto successivo per open/close se disponibile
             if i > 0:
                 open_price = prices[i-1][1]
             else:
@@ -89,9 +116,12 @@ def get_crypto_data(symbol):
         
         crypto_data['historical_data'] = historical_data
         
-        # 3. Ottieni informazioni dettagliate sulla criptovaluta
-        coin_url = f"{COINGECKO_API_BASE}/coins/{coin_id}?localization=false&tickers=false&community_data=false&developer_data=false"
-        coin_response = requests.get(coin_url)
+        coin_response = make_coingecko_request(f"coins/{coin_id}", {
+            "localization": "false", 
+            "tickers": "false", 
+            "community_data": "false", 
+            "developer_data": "false"
+        })
         
         if coin_response.status_code != 200:
             return jsonify({"error": f"Failed to fetch coin details: {coin_response.status_code}"}), coin_response.status_code
@@ -128,12 +158,21 @@ def get_crypto_data(symbol):
         print(f"Error fetching crypto data: {e}")
         return jsonify({"error": str(e)}), 500
 
-# Endpoint per le principali criptovalute
 @crypto_bp.route('/api/top_cryptos', methods=['GET'])
 def get_top_cryptos():
+    """
+    Get data for top cryptocurrencies by market capitalization.
+    
+    Returns:
+        JSON with top cryptocurrencies data including current price and 24-hour change
+    """
     try:
-        url = f"{COINGECKO_API_BASE}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1"
-        response = requests.get(url)
+        response = make_coingecko_request("coins/markets", {
+            "vs_currency": "usd",
+            "order": "market_cap_desc",
+            "per_page": 10,
+            "page": 1
+        })
         
         if response.status_code != 200:
             return jsonify({"error": "Failed to fetch cryptocurrency data"}), 500
@@ -154,21 +193,23 @@ def get_top_cryptos():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Endpoint per notizie crypto (trending coins)
 @crypto_bp.route('/api/crypto_news', methods=['GET'])
 def get_crypto_news():
+    """
+    Get trending cryptocurrency news based on trending coins.
+    
+    Returns:
+        JSON with news items featuring trending cryptocurrencies
+    """
     try:
-        # Ottieni trending coins come notizie
-        trending_url = f"{COINGECKO_API_BASE}/search/trending"
-        trending_response = requests.get(trending_url)
+        trending_response = make_coingecko_request("search/trending")
         
         if trending_response.status_code != 200:
-            return jsonify({"error": "Failed to fetch trending data"}), 500
+            return jsonify({"error": f"Failed to fetch trending data: {trending_response.status_code}"}), 500
             
         trending_data = trending_response.json()
         trending_coins = trending_data.get('coins', [])
         
-        # Formatta i dati come notizie
         news_data = []
         for i, coin in enumerate(trending_coins[:5]):
             coin_item = coin.get('item', {})
@@ -187,31 +228,34 @@ def get_crypto_news():
         print(f"Error fetching crypto news: {e}")
         return jsonify({"error": str(e), "news": []}), 500
 
-
-# Add these new endpoints to your crypto.py file
-
 @crypto_bp.route('/api/crypto_market_overview', methods=['GET'])
 def get_crypto_market_overview():
+    """
+    Provide a comprehensive cryptocurrency market overview.
+    
+    Returns:
+        JSON with market summary, indices, categories, top gainers, losers and market trend data
+    """
     try:
-        # Get global market data
-        global_url = f"{COINGECKO_API_BASE}/global"
-        global_response = requests.get(global_url)
+        global_response = make_coingecko_request("global")
         
         if global_response.status_code != 200:
-            return jsonify({"error": "Failed to fetch global market data"}), 500
+            return jsonify({"error": f"Failed to fetch global market data: {global_response.status_code}"}), 500
             
         global_data = global_response.json().get('data', {})
         
-        # Get top 100 coins for better market trend analysis
-        market_url = f"{COINGECKO_API_BASE}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1"
-        market_response = requests.get(market_url)
+        market_response = make_coingecko_request("coins/markets", {
+            "vs_currency": "usd",
+            "order": "market_cap_desc",
+            "per_page": 100,
+            "page": 1
+        })
         
         if market_response.status_code != 200:
-            return jsonify({"error": "Failed to fetch market data"}), 500
+            return jsonify({"error": f"Failed to fetch market data: {market_response.status_code}"}), 500
             
         coins_data = market_response.json()
         
-        # Calculate actual trending percentages
         total_coins = len(coins_data)
         up_trending_coins = sum(1 for coin in coins_data if coin.get('price_change_percentage_24h', 0) > 0)
         down_trending_coins = total_coins - up_trending_coins
@@ -219,7 +263,6 @@ def get_crypto_market_overview():
         up_trending_percent = round((up_trending_coins / total_coins) * 100) if total_coins > 0 else 0
         down_trending_percent = round((down_trending_coins / total_coins) * 100) if total_coins > 0 else 0
         
-        # Prepare the response structure
         market_overview = {
             "market_summary": {
                 "total_market_cap_usd": global_data.get('total_market_cap', {}).get('usd'),
@@ -264,20 +307,17 @@ def get_crypto_market_overview():
                 "dex": {"name": "DEX", "change_percent": global_data.get('market_cap_change_percentage_24h_usd', 0) + 0.5}
             },
             "market_data": {
-                "up_trending": up_trending_percent,  # Real percentage of coins trending up
-                "down_trending": down_trending_percent  # Real percentage of coins trending down
+                "up_trending": up_trending_percent,
+                "down_trending": down_trending_percent
             },
             "gainers": {},
             "losers": {},
             "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
         
-        # Calculate gainers and losers
-        # Filter out coins with None price_change_percentage_24h
         valid_coins = [c for c in coins_data if c.get('price_change_percentage_24h') is not None]
         sorted_by_change = sorted(valid_coins, key=lambda x: x.get('price_change_percentage_24h', 0), reverse=True)
         
-        # Top 5 gainers
         for coin in sorted_by_change[:5]:
             market_overview["gainers"][coin['symbol'].upper()] = {
                 "name": coin['name'],
@@ -285,7 +325,6 @@ def get_crypto_market_overview():
                 "change_percent": coin['price_change_percentage_24h']
             }
             
-        # Top 5 losers
         for coin in sorted_by_change[-5:]:
             market_overview["losers"][coin['symbol'].upper()] = {
                 "name": coin['name'],
@@ -301,13 +340,19 @@ def get_crypto_market_overview():
     
 @crypto_bp.route('/api/cryptos_by_category', methods=['GET'])
 def get_cryptos_by_category():
-    # Get category from query parameters
+    """
+    Get cryptocurrencies filtered by category.
+    
+    Query Parameters:
+        category: Cryptocurrency category to filter by (default: '' which returns top coins)
+        
+    Returns:
+        JSON with cryptocurrencies in the specified category
+    """
     category = request.args.get('category', default='', type=str)
     
     try:
-        # API endpoint to get coins by category (if category is provided)
-        if category and category.lower() != 'all':
-            # Map frontend category names to CoinGecko category IDs
+        if (category and category.lower() != 'all'):
             category_map = {
                 'defi': 'decentralized-finance-defi',
                 'layer-1': 'layer-1',
@@ -317,11 +362,9 @@ def get_cryptos_by_category():
                 'dex': 'decentralized-exchange'
             }
             
-            # Use the mapped category ID if available, otherwise use the provided category
             category_id = category_map.get(category.lower(), category.lower())
             url = f"{COINGECKO_API_BASE}/coins/markets?vs_currency=usd&category={category_id}&order=market_cap_desc&per_page=20&page=1"
         else:
-            # If no category or 'All' is selected, get the top coins by market cap
             url = f"{COINGECKO_API_BASE}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1"
             
         response = requests.get(url)
@@ -332,7 +375,6 @@ def get_cryptos_by_category():
         data = response.json()
         category_coins = {}
         
-        # Format the response
         for coin in data:
             symbol = coin['symbol'].upper()
             category_coins[symbol] = {
@@ -351,6 +393,15 @@ def get_cryptos_by_category():
 
 @crypto_bp.route('/api/crypto_batch', methods=['GET'])
 def get_crypto_batch():
+    """
+    Get basic data for multiple cryptocurrencies in a single request.
+    
+    Query Parameters:
+        symbols: Comma-separated list of cryptocurrency symbols
+        
+    Returns:
+        JSON with data for all requested cryptocurrencies
+    """
     symbols = request.args.get('symbols', '')
     if not symbols:
         return jsonify({'error': 'No symbols provided'}), 400
@@ -359,38 +410,45 @@ def get_crypto_batch():
     result = {}
     
     try:
-        # Prima, otteniamo il mapping tra simboli e ID CoinGecko
         search_results = {}
         for symbol in symbol_list:
-            # Rimuovi eventuali USDT e rendi tutto minuscolo
             clean_symbol = symbol.lower().replace('usdt', '')
             
-            # Cerca l'ID CoinGecko per questo simbolo
-            search_url = f"{COINGECKO_API_BASE}/search?query={clean_symbol}"
-            search_response = requests.get(search_url)
+            search_response = make_coingecko_request("search", {"query": clean_symbol})
             
-            if search_response.status_code == 200 and search_response.json().get('coins'):
-                coins = search_response.json().get('coins', [])
+            if search_response.status_code == 200:
+                data = search_response.json()
+                coins = data.get('coins', [])
                 if coins:
-                    # Prendiamo il primo risultato (più rilevante)
                     search_results[symbol.upper()] = {
                         'id': coins[0]['id'],
                         'name': coins[0]['name']
                     }
+                    print(f"Found ID for {symbol}: {coins[0]['id']}")
+                else:
+                    print(f"No coins found for symbol: {symbol}")
+            else:
+                print(f"Search API returned status code {search_response.status_code} for {symbol}")
         
-        # Ora raccogliamo i dati per ogni ID trovato
         if search_results:
             ids = [info['id'] for info in search_results.values()]
-            ids_param = '%2C'.join(ids)  # URL-encoded comma
-            url = f"{COINGECKO_API_BASE}/coins/markets?vs_currency=usd&ids={ids_param}"
             
-            response = requests.get(url)
+            response = make_coingecko_request("coins/markets", {
+                "vs_currency": "usd",
+                "ids": ",".join(ids),
+                "order": "market_cap_desc",
+                "per_page": 100,
+                "page": 1
+            })
+            
             if response.status_code != 200:
+                print(f"Markets API returned status code: {response.status_code}")
+                print(f"Response content: {response.text[:200]}...")
                 return jsonify({'error': f'Failed to fetch crypto data: {response.status_code}'}), 500
                 
             coins_data = response.json()
+            print(f"Got data for {len(coins_data)} coins")
             
-            # Build reverse mapping from id to symbol
             id_to_symbol = {info['id']: symbol for symbol, info in search_results.items()}
             
             for coin in coins_data:
@@ -405,7 +463,6 @@ def get_crypto_batch():
                         'name': coin.get('name')
                     }
             
-            # Add placeholder for symbols that weren't found
             for symbol in symbol_list:
                 upper_symbol = symbol.upper()
                 if upper_symbol not in result:
@@ -416,8 +473,29 @@ def get_crypto_batch():
                         'price_change_percentage_24h': 0,
                         'name': f"Unknown ({upper_symbol})"
                     }
+        else:
+            print("No valid search results found for any symbols")
+            for symbol in symbol_list:
+                upper_symbol = symbol.upper()
+                result[upper_symbol] = {
+                    'symbol': upper_symbol,
+                    'current_price': 0,
+                    'price_change_24h': 0,
+                    'price_change_percentage_24h': 0,
+                    'name': f"Unknown ({upper_symbol})"
+                }
     except Exception as e:
         print(f"Error fetching crypto batch data: {e}")
+        for symbol in symbol_list:
+            upper_symbol = symbol.upper()
+            if upper_symbol not in result:
+                result[upper_symbol] = {
+                    'symbol': upper_symbol,
+                    'current_price': 0,
+                    'price_change_24h': 0,
+                    'price_change_percentage_24h': 0,
+                    'name': f"Error: {upper_symbol}"
+                }
     
-    print("Returning result:", result)  # Debug output
+    print("Returning result:", result)
     return jsonify(result)

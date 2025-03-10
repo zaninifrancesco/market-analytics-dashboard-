@@ -10,11 +10,14 @@ import Sidebar from './components/Sidebar';
 import Alerts from './pages/Alerts';
 import WatchList from './pages/WatchList';
 import { WatchlistProvider } from './context/WatchlistContext';
+import AlertChecker from './components/AlertChecker';
+import About from './pages/About';
 
 function App() {
   return (
     <WatchlistProvider>
       <Router>
+        <AlertChecker/>
         <div className="flex">
           <Sidebar />
           <main className="flex-1 overflow-auto">
@@ -26,6 +29,8 @@ function App() {
               <Route path="/stocks" element={<StockPage />} />
               <Route path="/crypto" element={<CryptosPage />} />
               <Route path="/watchlist" element={<WatchList />} />
+              <Route path="/alerts" element={<Alerts />} />
+              <Route path="/about" element={<About />} />
             </Routes>
           </main>
         </div>

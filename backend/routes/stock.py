@@ -10,6 +10,18 @@ stock_bp = Blueprint('stock_bp', __name__)
 # Endpoint for stock data
 @stock_bp.route('/api/stock_data/<string:symbol>', methods=['GET'])
 def get_stock_data(symbol):
+    """
+    Fetch detailed stock data for a given symbol with appropriate time intervals.
+    
+    Args:
+        symbol: Stock ticker symbol
+        
+    Query Parameters:
+        period: Time period for historical data (default: '1d')
+        
+    Returns:
+        JSON with company information and historical price data
+    """
     period = request.args.get('period', default='1d', type=str)
     
     # Seleziona l'intervallo appropriato in base al periodo richiesto
@@ -140,7 +152,12 @@ def get_stock_data(symbol):
 # Endpoint to get top traded stocks with real data
 @stock_bp.route('/api/top_stocks', methods=['GET'])
 def get_top_stocks():
-
+    """
+    Get data for a list of top/popular stocks.
+    
+    Returns:
+        JSON with top stock data including current price and price change percentage
+    """
     # Lista delle azioni più popolari/importanti da monitorare
     popular_symbols = [
         'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 
@@ -181,6 +198,12 @@ def get_top_stocks():
 
 @stock_bp.route('/api/market_overview', methods=['GET'])
 def get_market_overview():
+    """
+    Provide a comprehensive market overview including indices, sectors, and stock performance.
+    
+    Returns:
+        JSON with market indices, sector performance, top gainers, losers, and sector breakdown
+    """
     try:
         # Indici principali
         indices = {
@@ -319,6 +342,16 @@ def get_market_overview():
 
 @stock_bp.route('/api/stocks_by_sector', methods=['GET'])
 def get_stocks_by_sector():
+    """
+    Get stocks filtered by sector.
+    
+    Query Parameters:
+        sector: Market sector to filter by (default: 'Technology')
+        limit: Maximum number of stocks to return (default: 10)
+        
+    Returns:
+        JSON with stocks in the specified sector
+    """
     sector = request.args.get('sector', 'Technology')
     limit = request.args.get('limit', 10, type=int)
     
@@ -367,6 +400,15 @@ def get_stocks_by_sector():
 # Endpoint for stock search
 @stock_bp.route('/api/search_stock', methods=['GET'])
 def search_stock():
+    """
+    Search for stocks based on a query string.
+    
+    Query Parameters:
+        query: Search term for stock symbol or name
+        
+    Returns:
+        JSON array of matching stocks with symbols and names
+    """
     query = request.args.get('query', '')
     if not query or len(query) < 2:
         return jsonify([])
@@ -397,6 +439,15 @@ def search_stock():
 # backend/routes/stock.py
 @stock_bp.route('/api/stock_batch', methods=['GET'])
 def get_stock_batch():
+    """
+    Get basic data for multiple stocks in a single request.
+    
+    Query Parameters:
+        symbols: Comma-separated list of stock symbols
+        
+    Returns:
+        JSON with data for all requested stocks
+    """
     symbols = request.args.get('symbols', '')
     if not symbols:
         return jsonify({'error': 'No symbols provided'}), 400

@@ -39,8 +39,7 @@ def technical_indicators(symbol):
         # Calculate VWAP if volume is available
         vwap = None
         if 'volume' in df.columns:
-            # In a real-time trading context, VWAP is calculated for a single day
-            # For this API, we'll calculate a rolling VWAP over the last 20 days
+            #calculate a rolling VWAP over the last 20 days
             df['vwap'] = (df['close'] * df['volume']).rolling(window=20).sum() / df['volume'].rolling(window=20).sum()
             vwap = df['vwap'].iloc[-1]
         

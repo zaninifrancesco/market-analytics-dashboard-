@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import WatchlistButton from '../components/WatchlistButton';
+import AlertButton from '../components/AlertButton';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
   AreaChart, Area, BarChart, Bar
@@ -13,6 +14,11 @@ import {
 import Header from '../components/Header';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 
+/**
+ * Stock Details page component.
+ * Displays detailed information about a specific stock including price chart, 
+ * key statistics, company info, technical indicators, and analyst recommendations.
+ */
 const StockDetails = () => {
   const { symbol } = useParams();
   const navigate = useNavigate();
@@ -24,6 +30,9 @@ const StockDetails = () => {
   const [chartType, setChartType] = useState('line');
   const [error, setError] = useState(null);
 
+  /**
+   * Navigates back to the stocks listing page
+   */
   const handleBackToStocks = () => {
     navigate('/stocks');
   };
@@ -64,7 +73,6 @@ const StockDetails = () => {
         setIndicators(data);
       } catch (err) {
         console.error('Error fetching technical indicators:', err);
-        // We don't set the main error state here to avoid blocking the main content
       } finally {
         setLoadingIndicators(false);
       }
@@ -73,14 +81,23 @@ const StockDetails = () => {
     fetchTechnicalIndicators();
   }, [symbol]);
 
+  /**
+   * Formats the tooltip value to display with dollar sign and 2 decimal places
+   * @param {number} value - The numeric value to format
+   * @returns {string} Formatted value string
+   */
   const formatTooltipValue = (value) => {
     return value ? `$${value.toFixed(2)}` : 'N/A';
   };
 
+  /**
+   * Formats number values for display (billions as B, millions as M)
+   * @param {number} num - The number to format
+   * @returns {string} Formatted number string
+   */
   const formatNumber = (num) => {
     if (num === null || num === undefined || num === 'N/A') return 'N/A';
     
-    // For market cap, format in billions/millions
     if (num > 1000000000) {
       return `$${(num / 1000000000).toFixed(2)}B`;
     } else if (num > 1000000) {
@@ -90,7 +107,11 @@ const StockDetails = () => {
     }
   };
 
-  // Calculate performance metrics
+  /**
+   * Calculates performance metrics based on historical price data
+   * @param {Array} data - Historical price data array
+   * @returns {Object} Object containing change and percentChange values
+   */
   const calculatePerformance = (data) => {
     if (!data || data.length < 2) return { change: 0, percentChange: 0 };
     
@@ -106,7 +127,12 @@ const StockDetails = () => {
     };
   };
 
-  // Get indicator status class
+  /**
+   * Returns the appropriate CSS class for the indicator value
+   * @param {string} indicator - The indicator name (e.g., 'RSI', 'SMA_50')
+   * @param {number} value - The indicator value
+   * @returns {string} CSS class string
+   */
   const getIndicatorStatusClass = (indicator, value) => {
     if (indicator === 'RSI') {
       if (value < 30) return 'text-green-600';
@@ -122,7 +148,12 @@ const StockDetails = () => {
     return 'text-blue-600';
   };
   
-  // Get indicator description
+  /**
+   * Generates a description text for the technical indicator
+   * @param {string} indicator - The indicator name
+   * @param {number} value - The indicator value
+   * @returns {string} Description text
+   */
   const getIndicatorDescription = (indicator, value) => {
     if (indicator === 'RSI') {
       if (value < 30) return 'Oversold - Potential buy signal';
@@ -151,7 +182,12 @@ const StockDetails = () => {
     return '';
   };
 
-  // Get indicator icon
+  /**
+   * Returns the appropriate icon for the indicator status
+   * @param {string} indicator - The indicator name
+   * @param {number} value - The indicator value
+   * @returns {JSX.Element} Icon component
+   */
   const getIndicatorIcon = (indicator, value) => {
     if (indicator === 'RSI') {
       if (value < 30) return <UpIcon size={16} className="text-green-600" />;
@@ -168,6 +204,10 @@ const StockDetails = () => {
     return <InfoIcon size={16} className="text-blue-600" />;
   };
 
+  /**
+   * Renders the appropriate chart based on selected chart type
+   * @returns {JSX.Element} Chart component
+   */
   const renderChart = () => {
     if (!stockData || !stockData.historical_data || stockData.historical_data.length === 0) {
       return <div className="text-center p-6">No chart data available</div>;
@@ -190,8 +230,8 @@ const StockDetails = () => {
             <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8}/>
-                  <stop offset="95%" stopColor="#82ca9d" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8}/>
+                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
                 </linearGradient>
               </defs>
               <XAxis dataKey="time" />
@@ -202,7 +242,7 @@ const StockDetails = () => {
               <Area 
                 type="monotone" 
                 dataKey="price" 
-                stroke="#82ca9d" 
+                stroke="#f59e0b" 
                 fillOpacity={1} 
                 fill="url(#colorPrice)" 
                 name="Price"
@@ -228,7 +268,7 @@ const StockDetails = () => {
               <YAxis />
               <Tooltip formatter={formatTooltipValue} />
               <Legend />
-              <Bar dataKey="volume" fill="#8884d8" name="Volume" />
+              <Bar dataKey="volume" fill="#f59e0b" name="Volume" />
             </BarChart>
           </ResponsiveContainer>
         );
@@ -246,7 +286,7 @@ const StockDetails = () => {
               <Line 
                 type="monotone" 
                 dataKey="price" 
-                stroke="#8884d8" 
+                stroke="#f59e0b" 
                 activeDot={{ r: 8 }} 
                 name="Price" 
               />
@@ -273,8 +313,7 @@ const StockDetails = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
         <main className="flex-1 p-6 overflow-auto">
-                    {/* Pulsante per tornare alla pagina delle criptovalute */}
-                    <div className="mb-4">
+          <div className="mb-4">
             <button 
               onClick={handleBackToStocks}
               className="flex items-center text-gray-600 hover:text-amber-600 transition-colors"
@@ -283,6 +322,7 @@ const StockDetails = () => {
               <span>Back to Stocks</span>
             </button>
           </div>
+          
           {loading ? (
             <div className="space-y-6">
               <div className="bg-white p-6 rounded-xl shadow-md">
@@ -299,19 +339,25 @@ const StockDetails = () => {
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Stock Header */}
               <div className="bg-white p-6 rounded-xl shadow-md">
                 <div className="flex justify-between items-start">
                   <div>
-                    <div className="flex items-center">
-                      <h1 className="text-3xl font-bold text-gray-900 mr-2">
-                        {stockData.company.name} ({stockData.company.symbol})
-                      </h1>
-                      <WatchlistButton symbol={stockData.company.symbol} type="stocks" />
-                    </div>
+                    <h1 className="text-3xl font-bold text-gray-900">
+                      <span className="flex items-center">
+                        {stockData.company.symbol}
+                        <div className="flex items-center ml-4">
+                          <WatchlistButton symbol={stockData.company.symbol} type="stocks" className="mr-4" />
+                          <AlertButton
+                            symbol={stockData.company.symbol}
+                            currentPrice={stockData.company.current_price}
+                            assetType="stock"
+                          />
+                        </div>
+                      </span>
+                    </h1>
                     <div className="mt-2 text-sm text-gray-600">
-                      <span className="mr-4">{stockData.company.sector}</span>
-                      <span>{stockData.company.industry}</span>
+                      <span className="mr-4">{stockData.company.name}</span>
+                      <span>{stockData.company.sector}</span>
                     </div>
                   </div>
                   <div className="text-right">
@@ -334,7 +380,6 @@ const StockDetails = () => {
                   </div>
                 </div>
 
-                {/* Chart controls */}
                 <div className="flex justify-between items-center mt-6 mb-4">
                   <div className="flex space-x-2">
                     {['1d', '5d', '1mo', '3mo', '6mo', '1y', '5y'].map(period => (
@@ -342,7 +387,7 @@ const StockDetails = () => {
                         key={period}
                         className={`px-3 py-1 text-sm rounded-md ${
                           timeframe === period 
-                            ? 'bg-blue-600 text-white' 
+                            ? 'bg-amber-600 text-white' 
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                         onClick={() => setTimeframe(period)}
@@ -361,7 +406,7 @@ const StockDetails = () => {
                         key={type}
                         className={`p-2 rounded-md ${
                           chartType === type
-                            ? 'bg-blue-600 text-white'
+                            ? 'bg-amber-600 text-white'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                         }`}
                         onClick={() => setChartType(type)}
@@ -373,16 +418,13 @@ const StockDetails = () => {
                   </div>
                 </div>
 
-                {/* Stock Chart */}
                 <div className="mt-4">
                   {renderChart()}
                 </div>
               </div>
 
-              {/* Company Overview */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
-                  {/* Key Statistics */}
                   <div className="bg-white p-6 rounded-xl shadow-md">
                     <h2 className="text-xl font-bold text-gray-800 mb-4">Key Statistics</h2>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -424,7 +466,6 @@ const StockDetails = () => {
                     </div>
                   </div>
 
-                  {/* About */}
                   <div className="bg-white p-6 rounded-xl shadow-md">
                     <h2 className="text-xl font-bold text-gray-800 mb-4">About {stockData.company.symbol}</h2>
                     <p className="text-gray-700">
@@ -436,7 +477,7 @@ const StockDetails = () => {
                           href={stockData.company.website} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 flex items-center"
+                          className="text-amber-600 hover:text-amber-800 flex items-center"
                         >
                           <GlobeIcon size={16} className="mr-1" />
                           Visit Website
@@ -445,7 +486,6 @@ const StockDetails = () => {
                     )}
                   </div>
 
-                  {/* Financials */}
                   {stockData.company.financials && (
                     <div className="bg-white p-6 rounded-xl shadow-md">
                       <h2 className="text-xl font-bold text-gray-800 mb-4">Financials</h2>
@@ -473,9 +513,7 @@ const StockDetails = () => {
                   )}
                 </div>
 
-                {/* Sidebar content */}
                 <div className="space-y-6">
-                  {/* Analyst Recommendations */}
                   <div className="bg-white p-6 rounded-xl shadow-md">
                     <h2 className="text-xl font-bold text-gray-800 mb-4">Analyst Recommendations</h2>
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -508,13 +546,12 @@ const StockDetails = () => {
                     </div>
                   </div>
 
-                  {/* Technical Indicators - Replacing Recent News section */}
                   <div className="bg-white p-6 rounded-xl shadow-md">
                     <h2 className="text-xl font-bold text-gray-800 mb-4">Technical Indicators</h2>
                     
                     {loadingIndicators ? (
                       <div className="flex justify-center items-center py-8">
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-500"></div>
                         <span className="ml-2 text-gray-500">Loading indicators...</span>
                       </div>
                     ) : !indicators ? (

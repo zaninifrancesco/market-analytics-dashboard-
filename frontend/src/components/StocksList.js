@@ -31,7 +31,6 @@ const StocksList = () => {
       } catch (err) {
         console.error("Errore nel fetch degli stock:", err);
         setError(`Impossibile caricare i dati delle azioni: ${err.message}`);
-        // Non impostare dati falsi, mantieni stocks vuoto
         setStocks({});
       } finally {
         setLoading(false);
@@ -88,7 +87,7 @@ const StocksList = () => {
     );
   }
 
-  // Assicurati che stocks sia un oggetto prima di usare Object.entries
+
   const stockEntries = Object.entries(stocks || {});
 
   return (
@@ -115,7 +114,6 @@ const StocksList = () => {
               className="bg-white border border-gray-100 rounded-xl p-4 hover:shadow-md transition-all duration-200 cursor-pointer group relative"
               onClick={() => handleStockClick(symbol)}
             >
-              {/* Watchlist Button - posizionato a sinistra e più piccolo */}
               <div 
                 className="absolute left-2 top-1/2 transform -translate-y-1/2" 
                 onClick={(e) => e.stopPropagation()}
