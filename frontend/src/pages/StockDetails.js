@@ -41,7 +41,7 @@ const StockDetails = () => {
     const fetchStockData = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`http://localhost:5000/api/stock_data/${symbol}?period=${timeframe}`);
+        const response = await fetch(`https://market-analytics-dashboard.onrender.com/api/stock_data/${symbol}?period=${timeframe}`);
         if (!response.ok) {
           throw new Error('Failed to fetch stock data');
         }
@@ -65,7 +65,7 @@ const StockDetails = () => {
       
       setLoadingIndicators(true);
       try {
-        const response = await fetch(`http://localhost:5000/api/technical_indicators/${symbol}`);
+        const response = await fetch(`https://market-analytics-dashboard.onrender.com/api/technical_indicators/${symbol}`);
         if (!response.ok) {
           throw new Error('Failed to fetch technical indicators');
         }

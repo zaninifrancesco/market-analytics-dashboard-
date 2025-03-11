@@ -26,7 +26,7 @@ const StocksPage = () => {
     const fetchMarketData = async () => {
       setLoading(true);
       try {
-        const response = await fetch('http://localhost:5000/api/market_overview');
+        const response = await fetch('https://market-analytics-dashboard.onrender.com/api/market_overview');
         if (!response.ok) {
           throw new Error('Failed to fetch market data');
         }
@@ -48,7 +48,7 @@ const StocksPage = () => {
   useEffect(() => {
     const fetchSectorStocks = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/stocks_by_sector?sector=${selectedSector}`);
+        const response = await fetch(`https://market-analytics-dashboard.onrender.com/api/stocks_by_sector?sector=${selectedSector}`);
         if (!response.ok) {
           throw new Error('Failed to fetch sector stocks');
         }

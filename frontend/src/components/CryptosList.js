@@ -13,7 +13,7 @@ const CryptosList = () => {
     const fetchTopSymbols = async () => {
       setLoading(true);
       try {
-        const response = await fetch("http://localhost:5000/api/top_cryptos");
+        const response = await fetch("https://market-analytics-dashboard.onrender.com/api/top_cryptos");
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }

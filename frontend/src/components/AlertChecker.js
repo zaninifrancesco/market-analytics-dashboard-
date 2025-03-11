@@ -24,7 +24,7 @@ const AlertChecker = () => {
       if (cryptoAlerts.length > 0) {
         const cryptoSymbols = [...new Set(cryptoAlerts.map(a => a.symbol))];
         try {
-          const response = await fetch(`http://localhost:5000/api/crypto_batch?symbols=${cryptoSymbols.join(',')}`);
+          const response = await fetch(`https://market-analytics-dashboard.onrender.com/api/crypto_batch?symbols=${cryptoSymbols.join(',')}`);
           console.log('response', response.url);
           if (!response.ok) {
             console.error('Errore nel recupero dei prezzi crypto:', response.status);
@@ -49,7 +49,7 @@ const AlertChecker = () => {
       if (stockAlerts.length > 0) {
         const stockSymbols = [...new Set(stockAlerts.map(a => a.symbol))];
         try {
-          const response = await fetch(`http://localhost:5000/api/stock_batch?symbols=${stockSymbols.join(',')}`);
+          const response = await fetch(`https://market-analytics-dashboard.onrender.com/api/stock_batch?symbols=${stockSymbols.join(',')}`);
           
           if (!response.ok) {
             console.error('Errore nel recupero dei prezzi stock:', response.status);

@@ -19,10 +19,10 @@ function News() {
       setLoading(true);
       try {
         // Fetch general financial news
-        const newsResponse = await fetch('http://localhost:5000/api/financial_news');
+        const newsResponse = await fetch('https://market-analytics-dashboard.onrender.com/api/financial_news');
         
         // Fetch crypto news
-        const cryptoResponse = await fetch('http://localhost:5000/api/crypto_news');
+        const cryptoResponse = await fetch('https://market-analytics-dashboard.onrender.com/api/crypto_news');
         
         if (!newsResponse.ok || !cryptoResponse.ok) {
           throw new Error('Failed to fetch news data');
@@ -46,10 +46,10 @@ function News() {
       setLoadingMarket(true);
       try {
         // Fetch stock market data from our stock.py endpoint
-        const stockResponse = await fetch('http://localhost:5000/api/market_overview');
+        const stockResponse = await fetch('https://market-analytics-dashboard.onrender.com/api/market_overview');
         
         // Fetch crypto market data from our crypto.py endpoint
-        const cryptoResponse = await fetch('http://localhost:5000/api/crypto_market_overview');
+        const cryptoResponse = await fetch('https://market-analytics-dashboard.onrender.com/api/crypto_market_overview');
         
         if (!stockResponse.ok || !cryptoResponse.ok) {
           throw new Error('Failed to fetch market data');
