@@ -1,4 +1,3 @@
-
 # Market Analytics Dashboard
 
 <div align="center">
@@ -23,6 +22,10 @@ The application integrates multiple financial data sources and presents them in 
 
 An advanced price alert system notifies users of market movements based on customizable thresholds, supporting both percentage and absolute price triggers with flexible notification options.
 
+## 🔗 Live Demo
+
+- **Frontend**: [https://market-analytics-dashboard.vercel.app/](https://market-analytics-dashboard.vercel.app/) (Hosted on Vercel)
+- **Backend API**: [https://market-analytics-dashboard.onrender.com](https://market-analytics-dashboard.onrender.com) (Hosted on Render)
 
 ## ✨ Features
 
@@ -83,6 +86,7 @@ An advanced price alert system notifies users of market movements based on custo
 | **Backend** | Flask 3, Flask-CORS, Python 3.8+ |
 | **Data Sources** | CoinGecko API, NewsAPI, Yahoo Finance API |
 | **Dev Tools** | npm, pip, Git |
+| **Deployment** | Vercel (Frontend), Render (Backend) |
 
 ## 📡 API Endpoints
 
@@ -116,62 +120,6 @@ An advanced price alert system notifies users of market movements based on custo
 | `GET` | `/api/market_news` | Get specific market-related news |
 | `GET` | `/api/unified_search?query={query}` | Search across stocks and cryptocurrencies |
 
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js 14+ and npm
-- Python 3.8+
-- API keys for:
-  - CoinGecko API
-  - NewsAPI
-
-
-### Installation
-
-This project requires API keys from external services to function properly. Follow these steps to configure your API keys:
-
-### Required API Keys
-
-1. **CoinGecko API** - Used for cryptocurrency data
-   - Sign up at [CoinGecko API](https://www.coingecko.com/en/api/pricing)
-   - Free tier has limited request rate but is sufficient for development
-
-2. **NewsAPI** - Used for financial news
-   - Sign up at [NewsAPI](https://newsapi.org/register)
-   - Free tier provides 100 requests/day
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/zaninifrancesco/market-analytics-dashboard.git
-   cd market-analytics-dashboard
-
-
-2. **Setup backend**
-   ```bash
-   cd backend
-   pip install -r requirements.txt
-   cp .env.example .env      # Edit with your API keys
-   ```
-
-3. **Setup frontend**
-   ```bash
-   cd ../frontend
-   npm install
-   ```
-
-4. **Run the application**
-   ```bash
-   # Terminal 1 - Backend
-   cd backend
-   python app.py
-
-   # Terminal 2 - Frontend
-   cd frontend
-   npm start
-   ```
-
-5. **Open your browser**
-   Navigate to `http://localhost:3000`
 
 ## 📁 Project Structure
 
