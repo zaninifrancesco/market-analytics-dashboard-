@@ -145,7 +145,7 @@ const About = () => {
                   <div className="flex items-center justify-center text-gray-400 text-sm">
                     <span className="flex items-center mr-4">
                       <Heart size={14} className="mr-1 text-red-400" />
-                      Built with passion
+                      Built with passion by Zanini Francesco
                     </span>
                     <span className="flex items-center">
                       <Coffee size={14} className="mr-1 text-amber-600" />

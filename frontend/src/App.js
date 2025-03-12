@@ -12,7 +12,7 @@ import WatchList from './pages/WatchList';
 import { WatchlistProvider } from './context/WatchlistContext';
 import AlertChecker from './components/AlertChecker';
 import About from './pages/About';
-
+import { Analytics } from "@vercel/analytics/react"
 function App() {
   return (
     <WatchlistProvider>
