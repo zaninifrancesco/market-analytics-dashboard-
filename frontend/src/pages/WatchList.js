@@ -27,7 +27,7 @@ const WatchList = () => {
       // Fetch stock data
       if (watchlist.stocks.length > 0) {
         const stockSymbols = watchlist.stocks.join(',');
-        const stockResponse = await fetch(`http://localhost:5000/api/stock_batch?symbols=${stockSymbols}`);
+        const stockResponse = await fetch(`https://market-analytics-dashboard.onrender.com/api/stock_batch?symbols=${stockSymbols}`);
         if (stockResponse.ok) {
           const stockData = await stockResponse.json();
           setStocksData(stockData);
@@ -37,7 +37,7 @@ const WatchList = () => {
       // Fetch crypto data
       if (watchlist.crypto.length > 0) {
         const cryptoSymbols = watchlist.crypto.join(',');
-        const cryptoResponse = await fetch(`http://localhost:5000/api/crypto_batch?symbols=${cryptoSymbols}`);
+        const cryptoResponse = await fetch(`https://market-analytics-dashboard.onrender.com/api/crypto_batch?symbols=${cryptoSymbols}`);
         if (cryptoResponse.ok) {
           const cryptoData = await cryptoResponse.json();
           setCryptoData(cryptoData);

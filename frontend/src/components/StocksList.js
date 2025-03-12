@@ -13,7 +13,7 @@ const StocksList = () => {
     const fetchTopSymbols = async () => {
       setLoading(true);
       try {
-        const response = await fetch("http://localhost:5000/api/top_stocks");
+        const response = await fetch("https://market-analytics-dashboard.onrender.com/api/top_stocks");
         
         if (!response.ok) {
           throw new Error(`API returned status: ${response.status}`);

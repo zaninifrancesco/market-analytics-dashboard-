@@ -32,7 +32,7 @@ const SearchBar = () => {
       setIsLoading(true);
       try {
         // Usa la nuova API unified_search che include sia stock che crypto
-        const response = await fetch(`http://localhost:5000/api/unified_search?query=${query}`);
+        const response = await fetch(`https://market-analytics-dashboard.onrender.com/api/unified_search?query=${query}`);
         if (!response.ok) {
           throw new Error('Search failed');
         }

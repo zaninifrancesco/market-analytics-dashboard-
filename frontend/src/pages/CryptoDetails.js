@@ -52,7 +52,7 @@ const CryptoDetails = () => {
     const fetchCryptoData = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`http://localhost:5000/api/crypto_data/${symbol.toUpperCase()}?period=${timeframe}`);
+        const response = await fetch(`https://market-analytics-dashboard.onrender.com/api/crypto_data/${symbol.toUpperCase()}?period=${timeframe}`);
 
         if (!response.ok) {
           throw new Error(`Failed to fetch crypto data: ${response.status}`);

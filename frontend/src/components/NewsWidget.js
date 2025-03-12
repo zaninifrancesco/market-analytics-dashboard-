@@ -6,7 +6,7 @@ const NewsWidget = () => {
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/economic_news");
+        const response = await fetch("https://market-analytics-dashboard.onrender.com/api/economic_news");
         const data = await response.json();
         setNews(data.slice(0, 5));
       } catch (error) {

@@ -26,7 +26,7 @@ const CryptosPage = () => {
       setLoading(true);
       try {
         // Using CoinGecko API via our backend
-        const response = await fetch('http://localhost:5000/api/crypto_market_overview');
+        const response = await fetch('https://market-analytics-dashboard.onrender.com/api/crypto_market_overview');
         const data = await response.json();
         setMarketData(data);
       } catch (err) {
@@ -45,7 +45,7 @@ const CryptosPage = () => {
       try {
         // If "All" is selected, we don't need to filter by category
         const categoryParam = selectedCategory === 'All' ? '' : `?category=${selectedCategory.toLowerCase()}`;
-        const response = await fetch(`http://localhost:5000/api/cryptos_by_category${categoryParam}`);
+        const response = await fetch(`https://market-analytics-dashboard.onrender.com/api/cryptos_by_category${categoryParam}`);
         const data = await response.json();
         setCategoryCryptos(data);
       } catch (err) {
