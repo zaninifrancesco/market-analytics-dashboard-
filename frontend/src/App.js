@@ -34,6 +34,7 @@ function App() {
             </Routes>
           </main>
         </div>
+        <Analytics/>
       </Router>
     </WatchlistProvider>
   );
