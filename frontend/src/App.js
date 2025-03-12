@@ -18,10 +18,10 @@ function App() {
     <WatchlistProvider>
       <Router>
         <AlertChecker/>
-        <div className="flex">
+        <div className="flex flex-col md:flex-row min-h-screen"> {/* Modifica qui */}
           <Sidebar />
           <main className="flex-1 overflow-auto">
-        <Analytics/>
+            <Analytics/>
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/stock/:symbol" element={<StockDetails />} />
