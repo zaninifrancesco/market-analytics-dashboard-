@@ -11,8 +11,8 @@ import Alerts from './pages/Alerts';
 import WatchList from './pages/WatchList';
 import { WatchlistProvider } from './context/WatchlistContext';
 import AlertChecker from './components/AlertChecker';
-import About from './pages/About';
 import { Analytics } from "@vercel/analytics/react"
+import About from './pages/About';
 function App() {
   return (
     <WatchlistProvider>
