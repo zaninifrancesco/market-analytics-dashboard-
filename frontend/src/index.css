@@ -1,11 +1,3 @@
-/* Aggiungi questo in cima al file */
-html, body, #root {
-  height: 100%;
-  width: 100%;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-}
-
 @import "tailwindcss/base";
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";

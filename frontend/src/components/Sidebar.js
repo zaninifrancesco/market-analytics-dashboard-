@@ -33,12 +33,12 @@ const Sidebar = () => {
 
   return (
     <aside 
-      className={`
-        ${collapsed ? 'w-20' : 'w-72'}
-        transition-all duration-300 bg-white border-r border-gray-200 
-        text-gray-800 shadow-sm flex-shrink-0 
-        md:h-screen h-auto z-10
-      `}
+      className={`${
+        collapsed ? 'w-20' : 'w-72'
+      } transition-all duration-300 bg-white border-r border-gray-200 
+      text-gray-800 shadow-sm flex-shrink-0 
+      ${window.innerWidth < 768 ? 'h-auto' : 'h-screen'}
+      md:flex md:flex-col justify-between p-4 relative`}
     >
       {/* Toggle button */}
       <button 
