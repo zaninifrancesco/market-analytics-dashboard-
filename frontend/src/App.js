@@ -21,6 +21,7 @@ function App() {
         <div className="flex">
           <Sidebar />
           <main className="flex-1 overflow-auto">
+        <Analytics/>
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/stock/:symbol" element={<StockDetails />} />
@@ -34,7 +35,6 @@ function App() {
             </Routes>
           </main>
         </div>
-        <Analytics/>
       </Router>
     </WatchlistProvider>
   );
