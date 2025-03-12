@@ -86,7 +86,7 @@ const About = () => {
                         </li>
                         <li className="flex items-center">
                           <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                          AlphaVantage API for stock data
+                          yfinance for stock data
                         </li>
                         <li className="flex items-center">
                           <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
@@ -143,13 +143,9 @@ const About = () => {
                   </p>
                   
                   <div className="flex items-center justify-center text-gray-400 text-sm">
-                    <span className="flex items-center mr-4">
+                    <span className="flex items-center">
                       <Heart size={14} className="mr-1 text-red-400" />
                       Built with passion by Zanini Francesco
-                    </span>
-                    <span className="flex items-center">
-                      <Coffee size={14} className="mr-1 text-amber-600" />
-                      and plenty of coffee
                     </span>
                   </div>
                 </div>
