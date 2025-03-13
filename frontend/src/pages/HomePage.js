@@ -6,11 +6,11 @@ import Header from "../components/Header";
 
 const HomePage = () => {
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50">
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header showSearchBar={true} />
-        <main className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 p-4 md:p-6 overflow-auto">
-          <div className="col-span-1 md:col-span-2 space-y-6">
+        <main className="flex-1 grid grid-cols-3 gap-6 p-6 overflow-auto">
+          <div className="col-span-2 space-y-6">
             <div className="bg-white rounded-xl shadow-md p-6">
               <h2 className="text-2xl font-bold text-gray-800 mb-4 border-b pb-3">
                 Stocks Market

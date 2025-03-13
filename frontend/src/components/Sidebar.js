@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { 
   HomeIcon, 
@@ -19,26 +19,12 @@ import {
 } from "lucide-react";
 
 const Sidebar = () => {
-  const [collapsed, setCollapsed] = useState(window.innerWidth < 768);
+  const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
-
-  // Aggiungi listener per il resize
-  useEffect(() => {
-    const handleResize = () => {
-      setCollapsed(window.innerWidth < 768);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   return (
     <aside 
-      className={`${
-        collapsed ? 'w-20' : 'w-72'
-      } transition-all duration-300 bg-white border-r border-gray-200 
-      text-gray-800 shadow-sm flex-shrink-0 
-      ${window.innerWidth < 768 ? 'h-auto' : 'h-screen'}
-      md:flex md:flex-col justify-between p-4 relative`}
+      className={`${collapsed ? 'w-20' : 'w-72'} transition-all duration-300 h-screen bg-white border-r border-gray-200 text-gray-800 shadow-sm flex flex-col justify-between p-4 relative`}
     >
       {/* Toggle button */}
       <button 
