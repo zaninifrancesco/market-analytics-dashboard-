@@ -7,20 +7,20 @@ import numpy as np
 
 stock_bp = Blueprint('stock_bp', __name__)
 
-# Endpoint for stock data
+# Endpoint per i dati azionari
 @stock_bp.route('/api/stock_data/<string:symbol>', methods=['GET'])
 def get_stock_data(symbol):
     """
-    Fetch detailed stock data for a given symbol with appropriate time intervals.
+    Recupera dati azionari dettagliati per un dato simbolo con intervalli di tempo appropriati.
     
     Args:
-        symbol: Stock ticker symbol
+        symbol: Simbolo ticker dell'azione
         
     Query Parameters:
-        period: Time period for historical data (default: '1d')
+        period: Periodo di tempo per i dati storici (default: '1d')
         
     Returns:
-        JSON with company information and historical price data
+        JSON con informazioni sull'azienda e dati storici dei prezzi
     """
     period = request.args.get('period', default='1d', type=str)
     
@@ -44,23 +44,23 @@ def get_stock_data(symbol):
         
     try:
         stock = yf.Ticker(symbol)
-        # Get company info
+        # Ottieni informazioni sull'azienda
         company_info = stock.info
         
-        # Get historical data with appropriate granularity
+        # Ottieni dati storici con la granularità appropriata
         data = stock.history(period=period, interval=interval)
         
         if data.empty:
-            return jsonify({"error": f"No data available for {symbol}"}), 404
+            return jsonify({"error": f"Nessun dato disponibile per {symbol}"}), 404
 
-        # Calculate VWAP if volume is available
+        # Calcola VWAP se il volume è disponibile
         if 'Volume' in data.columns and len(data) > 0:
             data['VWAP'] = (data['Close'] * data['Volume']).cumsum() / data['Volume'].cumsum()
         
-        # Convert to list of dictionaries for JSON response
+        # Converti in lista di dizionari per la risposta JSON
         result = []
         for index, row in data.iterrows():
-            # Format timestamp based on interval
+            # Formatta il timestamp in base all'intervallo
             if interval in ['1m', '5m', '15m', '30m', '1h']:
                 timestamp_format = '%Y-%m-%d %H:%M:%S'
             else:
@@ -79,7 +79,7 @@ def get_stock_data(symbol):
             
             result.append(entry)
         
-        # Extract key company information
+        # Estrai le informazioni chiave dell'azienda
         company_data = {
             'symbol': symbol,
             'name': company_info.get('longName', 'N/A'),
@@ -99,13 +99,13 @@ def get_stock_data(symbol):
             'business_summary': company_info.get('longBusinessSummary', 'N/A')
         }
 
-        # Get financial data
+        # Ottieni dati finanziari
         try:
             financials = stock.financials
             balance_sheet = stock.balance_sheet
             cash_flow = stock.cashflow
             
-            # Extract key financial metrics (most recent quarter)
+            # Estrai le metriche finanziarie chiave (trimestre più recente)
             if not financials.empty and len(financials.columns) > 0:
                 latest_quarter = financials.columns[0]
                 financial_data = {
@@ -114,20 +114,20 @@ def get_stock_data(symbol):
                 }
                 company_data['financials'] = financial_data
             
-            # Add cash data
+            # Aggiungi dati sulla liquidità
             if not balance_sheet.empty and len(balance_sheet.columns) > 0:
                 latest_bs = balance_sheet.columns[0]
                 company_data['cash'] = float(balance_sheet.loc['Cash', latest_bs]) if 'Cash' in balance_sheet.index else None
             
         except Exception as e:
-            print(f"Error getting financials: {e}")
+            print(f"Errore nel recupero dei dati finanziari: {e}")
             company_data['financials'] = {}
         
-        # Get news
+        # Ottieni notizie
         try:
             news = stock.news
             news_data = []
-            for item in news[:5]:  # Limit to 5 news items
+            for item in news[:5]:  # Limita a 5 notizie
                 news_data.append({
                     'title': item.get('title', ''),
                     'publisher': item.get('publisher', ''),
@@ -136,7 +136,7 @@ def get_stock_data(symbol):
                 })
             company_data['news'] = news_data
         except Exception as e:
-            print(f"Error getting news: {e}")
+            print(f"Errore nel recupero delle notizie: {e}")
             company_data['news'] = []
 
         return jsonify({
@@ -145,18 +145,18 @@ def get_stock_data(symbol):
         })
 
     except Exception as e:
-        print(f"Error fetching stock data: {e}")
+        print(f"Errore nel recupero dei dati azionari: {e}")
         return jsonify({"error": str(e)}), 500
 
 
-# Endpoint to get top traded stocks with real data
+# Endpoint per ottenere le azioni più scambiate con dati reali
 @stock_bp.route('/api/top_stocks', methods=['GET'])
 def get_top_stocks():
     """
-    Get data for a list of top/popular stocks.
+    Ottieni dati per una lista di azioni popolari/principali.
     
     Returns:
-        JSON with top stock data including current price and price change percentage
+        JSON con i dati delle azioni principali, inclusi prezzo corrente e variazione percentuale del prezzo
     """
     # Lista delle azioni più popolari/importanti da monitorare
     popular_symbols = [
@@ -199,10 +199,10 @@ def get_top_stocks():
 @stock_bp.route('/api/market_overview', methods=['GET'])
 def get_market_overview():
     """
-    Provide a comprehensive market overview including indices, sectors, and stock performance.
+    Fornisce una panoramica completa del mercato che include indici, settori e performance azionarie.
     
     Returns:
-        JSON with market indices, sector performance, top gainers, losers, and sector breakdown
+        JSON con indici di mercato, performance dei settori, top gainers, losers e suddivisione per settore
     """
     try:
         # Indici principali
@@ -218,11 +218,19 @@ def get_market_overview():
         for symbol, name in indices.items():
             try:
                 ticker = yf.Ticker(symbol)
-                hist = ticker.history(period="1d")
+                hist = ticker.history(period="1d") # Modificato da 2d a 1d per coerenza con altri endpoint e per evitare errori se ci sono meno di 2 giorni di dati disponibili
                 if not hist.empty:
                     last_close = float(hist['Close'].iloc[-1])
-                    prev_close = float(hist['Close'].iloc[-2]) if len(hist) > 1 else last_close
-                    change_percent = ((last_close - prev_close) / prev_close) * 100
+                    # Usa il prezzo di chiusura precedente da info se disponibile, altrimenti l'ultimo prezzo di chiusura se hist ha solo una riga
+                    prev_close_info = ticker.info.get('previousClose')
+                    if prev_close_info:
+                         prev_close = float(prev_close_info)
+                    elif len(hist) > 1:
+                        prev_close = float(hist['Close'].iloc[-2])
+                    else:
+                        prev_close = last_close # Se c'è solo un giorno, la variazione è 0
+
+                    change_percent = ((last_close - prev_close) / prev_close) * 100 if prev_close != 0 else 0
                     
                     indices_data[symbol] = {
                         'name': name,
@@ -230,34 +238,34 @@ def get_market_overview():
                         'change_percent': change_percent
                     }
             except Exception as e:
-                print(f"Error fetching index {symbol}: {e}")
+                print(f"Errore nel recupero dell'indice {symbol}: {e}")
         
-        # Market trends - esempio basato sui settori
+
         sectors = [
-            'XLK', # Technology
-            'XLF', # Financial
-            'XLV', # Healthcare
-            'XLE', # Energy
-            'XLI', # Industrial
-            'XLP', # Consumer Staples
-            'XLY', # Consumer Discretionary
+            'XLK', # Tecnologia
+            'XLF', # Finanziario
+            'XLV', # Sanitario
+            'XLE', # Energia
+            'XLI', # Industriale
+            'XLP', # Beni di consumo primari
+            'XLY', # Beni di consumo discrezionali
             'XLU', # Utilities
-            'XLB', # Materials
-            'XLRE' # Real Estate
+            'XLB', # Materiali
+            'XLRE' # Immobiliare
         ]
         
         sectors_data = {}
         sector_names = {
-            'XLK': 'Technology',
-            'XLF': 'Financial',
-            'XLV': 'Healthcare',
-            'XLE': 'Energy',
-            'XLI': 'Industrial',
-            'XLP': 'Consumer Staples',
-            'XLY': 'Consumer Discretionary',
+            'XLK': 'Tecnologia',
+            'XLF': 'Finanziario',
+            'XLV': 'Sanitario',
+            'XLE': 'Energia',
+            'XLI': 'Industriale',
+            'XLP': 'Beni di consumo primari',
+            'XLY': 'Beni di consumo discrezionali',
             'XLU': 'Utilities',
-            'XLB': 'Materials',
-            'XLRE': 'Real Estate'
+            'XLB': 'Materiali',
+            'XLRE': 'Immobiliare'
         }
         
         for symbol in sectors:
@@ -267,7 +275,7 @@ def get_market_overview():
                 if not hist.empty:
                     last_close = float(hist['Close'].iloc[-1])
                     prev_close = float(hist['Close'].iloc[-5]) if len(hist) >= 5 else float(hist['Close'].iloc[0])
-                    change_percent = ((last_close - prev_close) / prev_close) * 100
+                    change_percent = ((last_close - prev_close) / prev_close) * 100 if prev_close != 0 else 0
                     
                     sectors_data[symbol] = {
                         'name': sector_names.get(symbol, symbol),
@@ -275,7 +283,7 @@ def get_market_overview():
                         'change_percent': change_percent
                     }
             except Exception as e:
-                print(f"Error fetching sector {symbol}: {e}")
+                print(f"Errore nel recupero del settore {symbol}: {e}")
         
         # Top gainers e losers
         popular_stocks = [
@@ -289,32 +297,35 @@ def get_market_overview():
             try:
                 ticker = yf.Ticker(symbol)
                 info = ticker.info
-                hist = ticker.history(period="1d")
+                hist = ticker.history(period="1d") # Coerenza con l'endpoint degli indici
                 
                 if not hist.empty and 'longName' in info:
                     last_close = float(hist['Close'].iloc[-1])
-                    prev_close = info.get('previousClose', last_close)
-                    change_percent = ((last_close - prev_close) / prev_close) * 100
+                    prev_close = info.get('previousClose', last_close) # Usa previousClose da info per maggiore accuratezza
+                    change_percent = ((last_close - prev_close) / prev_close) * 100 if prev_close != 0 else 0
                     
                     stocks_data[symbol] = {
                         'name': info.get('longName', symbol),
-                        'sector': info.get('sector', 'Unknown'),
+                        'sector': info.get('sector', 'Sconosciuto'),
                         'price': last_close,
                         'change_percent': change_percent,
                         'market_cap': info.get('marketCap', None)
                     }
             except Exception as e:
-                print(f"Error fetching stock {symbol}: {e}")
+                print(f"Errore nel recupero dell'azione {symbol}: {e}")
         
+        gainers = {}
+        losers = {}
+        by_sector = {}
         # Ordinare per performance
         if stocks_data:
             gainers = dict(sorted(stocks_data.items(), key=lambda x: x[1]['change_percent'], reverse=True)[:10])
             losers = dict(sorted(stocks_data.items(), key=lambda x: x[1]['change_percent'])[:10])
             
             # Organizza per settore
-            by_sector = {}
+            
             for symbol, data in stocks_data.items():
-                sector = data.get('sector', 'Unknown')
+                sector = data.get('sector', 'Sconosciuto')
                 if sector not in by_sector:
                     by_sector[sector] = {}
                 by_sector[sector][symbol] = data
@@ -337,37 +348,35 @@ def get_market_overview():
         })
         
     except Exception as e:
-        print(f"Error getting market overview: {e}")
+        print(f"Errore nel recupero della panoramica di mercato: {e}")
         return jsonify({"error": str(e)}), 500
 
 @stock_bp.route('/api/stocks_by_sector', methods=['GET'])
 def get_stocks_by_sector():
     """
-    Get stocks filtered by sector.
+    Ottieni azioni filtrate per settore.
     
     Query Parameters:
-        sector: Market sector to filter by (default: 'Technology')
-        limit: Maximum number of stocks to return (default: 10)
+        sector: Settore di mercato per filtrare (default: 'Technology')
+        limit: Numero massimo di azioni da restituire (default: 10)
         
     Returns:
-        JSON with stocks in the specified sector
+        JSON con le azioni nel settore specificato
     """
     sector = request.args.get('sector', 'Technology')
     limit = request.args.get('limit', 10, type=int)
     
     try:
-        # Utilizziamo la libreria yfinance per ottenere titoli del settore specifico
-        # In un ambiente di produzione, dovresti utilizzare un database o un'API che fornisce queste informazioni
-        
-        # Questo è un approccio semplificato per dimostrare la struttura
         if sector == 'Technology':
             stocks = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'NVDA', 'INTC', 'CSCO', 'ADBE', 'CRM']
         elif sector == 'Financial':
             stocks = ['JPM', 'BAC', 'WFC', 'C', 'GS', 'MS', 'AXP', 'V', 'MA', 'BLK']
         elif sector == 'Healthcare':
             stocks = ['JNJ', 'PFE', 'UNH', 'MRK', 'ABT', 'ABBV', 'TMO', 'BMY', 'LLY', 'AMGN']
+        # Aggiungere altri settori se necessario
         else:
-            stocks = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META']  # Default
+            # Fallback generico o errore se il settore non è gestito
+            stocks = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META'] 
         
         stocks = stocks[:limit]
         result = {}
@@ -376,12 +385,12 @@ def get_stocks_by_sector():
             try:
                 ticker = yf.Ticker(symbol)
                 info = ticker.info
-                hist = ticker.history(period="1d")
+                hist = ticker.history(period="1d") # Coerenza
                 
                 if not hist.empty and 'longName' in info:
                     last_close = float(hist['Close'].iloc[-1])
-                    prev_close = info.get('previousClose', last_close)
-                    change_percent = ((last_close - prev_close) / prev_close) * 100
+                    prev_close = info.get('previousClose', last_close) # Usa previousClose
+                    change_percent = ((last_close - prev_close) / prev_close) * 100 if prev_close != 0 else 0
                     
                     result[symbol] = {
                         'name': info.get('longName', symbol),
@@ -390,84 +399,121 @@ def get_stocks_by_sector():
                         'market_cap': info.get('marketCap', None)
                     }
             except Exception as e:
-                print(f"Error fetching stock {symbol}: {e}")
+                print(f"Errore nel recupero dell'azione {symbol} per settore: {e}")
         
         return jsonify(result)
         
     except Exception as e:
-        print(f"Error getting stocks by sector: {e}")
+        print(f"Errore nel recupero delle azioni per settore: {e}")
         return jsonify({"error": str(e)}), 500
-# Endpoint for stock search
+# Endpoint per la ricerca di azioni
 @stock_bp.route('/api/search_stock', methods=['GET'])
 def search_stock():
     """
-    Search for stocks based on a query string.
+    Cerca azioni in base a una stringa di query.
     
     Query Parameters:
-        query: Search term for stock symbol or name
+        query: Termine di ricerca per simbolo o nome dell'azione
         
     Returns:
-        JSON array of matching stocks with symbols and names
+        Array JSON di azioni corrispondenti con simboli e nomi
     """
     query = request.args.get('query', '')
-    if not query or len(query) < 2:
+    if not query or len(query) < 2: # Richiede almeno 2 caratteri per la ricerca
         return jsonify([])
     
     try:
-        # This is a simplified search. In production, you'd use a better search mechanism
-        results = yf.Tickers(query).tickers
-        search_results = []
-        
-        for symbol, ticker in results.items():
-            try:
-                info = ticker.info
-                if 'longName' in info:
-                    search_results.append({
-                        'symbol': symbol,
-                        'name': info.get('longName', 'N/A'),
-                        'exchange': info.get('exchange', 'N/A')
-                    })
-            except:
-                pass
-                
-        return jsonify(search_results[:10])  # Limit to 10 results
-    
+        try:
+            ticker_obj = yf.Ticker(query)
+            info = ticker_obj.info
+            if info and info.get('longName'): # Controlla se sono state recuperate informazioni valide
+                 return jsonify([{
+                    'symbol': query.upper(), # Assicurati che il simbolo sia maiuscolo
+                    'name': info.get('longName', 'N/A'),
+                    'exchange': info.get('exchange', 'N/A')
+                }])
+            else:
+                # Se non trova info per la query come singolo ticker, restituisce lista vuota.
+                return jsonify([])
+        except Exception:
+             # Se yf.Ticker fallisce (es. simbolo non valido), restituisce lista vuota.
+            return jsonify([])
+
     except Exception as e:
-        print(f"Error searching stocks: {e}")
-        return jsonify([])
+        print(f"Errore nella ricerca delle azioni: {e}")
+        return jsonify([]) # Restituisce lista vuota in caso di errore generico
     
 # backend/routes/stock.py
 @stock_bp.route('/api/stock_batch', methods=['GET'])
 def get_stock_batch():
     """
-    Get basic data for multiple stocks in a single request.
+    Ottieni dati di base per più azioni in una singola richiesta.
     
     Query Parameters:
-        symbols: Comma-separated list of stock symbols
+        symbols: Lista di simboli azionari separati da virgola
         
     Returns:
-        JSON with data for all requested stocks
+        JSON con i dati per tutte le azioni richieste
     """
     symbols = request.args.get('symbols', '')
     if not symbols:
-        return jsonify({'error': 'No symbols provided'}), 400
+        return jsonify({'error': 'Nessun simbolo fornito'}), 400
     
-    symbol_list = symbols.split(',')
+    symbol_list = [s.strip().upper() for s in symbols.split(',') if s.strip()] # Pulisce e mette in maiuscolo i simboli
+    if not symbol_list:
+        return jsonify({'error': 'Lista di simboli non valida'}), 400
+        
     result = {}
+    
+    # Utilizza yf.Tickers per un recupero batch più efficiente
+    tickers_data = yf.Tickers(symbol_list)
     
     for symbol in symbol_list:
         try:
-            ticker = yf.Ticker(symbol)
-            data = ticker.info
+            # Accedi ai dati del singolo ticker dall'oggetto Tickers
+            ticker_info = tickers_data.tickers[symbol].info
+            
+            if not ticker_info or not ticker_info.get('regularMarketPrice'): # Controlla se ci sono dati validi
+                print(f"Dati non sufficienti per {symbol}")
+                result[symbol] = {
+                    'symbol': symbol,
+                    'name': symbol, # Fallback al simbolo se il nome non è disponibile
+                    'current_price': None,
+                    'price_change_24h': None,
+                    'price_change_percentage_24h': None,
+                    'error': 'Dati non disponibili o incompleti'
+                }
+                continue
+
+            current_price = ticker_info.get('regularMarketPrice', ticker_info.get('currentPrice'))
+            previous_close = ticker_info.get('regularMarketPreviousClose', ticker_info.get('previousClose'))
+            
+            price_change = None
+            price_change_percentage = None
+
+            if current_price is not None and previous_close is not None:
+                price_change = current_price - previous_close
+                if previous_close != 0: # Evita divisione per zero
+                    price_change_percentage = (price_change / previous_close) * 100
+                else:
+                    price_change_percentage = 0 # O None, a seconda di come si vuole gestire
             
             result[symbol] = {
                 'symbol': symbol,
-                'current_price': data.get('currentPrice', None),
-                'price_change_24h': data.get('regularMarketChange', 0),
-                'price_change_percentage_24h': data.get('regularMarketChangePercent', 0) * 100,
-                'name': data.get('shortName', symbol)
+                'current_price': current_price,
+                'price_change_24h': price_change,
+                'price_change_percentage_24h': price_change_percentage,
+                'name': ticker_info.get('shortName', ticker_info.get('longName', symbol))
             }
         except Exception as e:
-            print(f"Error fetching data for {symbol}: {e}")
-    
+            print(f"Errore nel recupero dei dati per {symbol}: {e}")
+            result[symbol] = {
+                'symbol': symbol,
+                'name': symbol,
+                'current_price': None,
+                'price_change_24h': None,
+                'price_change_percentage_24h': None,
+                'error': str(e)
+            }
+            
     return jsonify(result)

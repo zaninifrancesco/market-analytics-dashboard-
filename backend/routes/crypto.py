@@ -12,7 +12,6 @@ COINGECKO_PRO_API_BASE = "https://api.coingecko.com/api/v3"
 def make_coingecko_request(endpoint, params=None):
     """
     Makes a request to the CoinGecko API using the API key if available.
-    Falls back to public API with rate limits if no key is available.
     
     Args:
         endpoint: API endpoint to call
